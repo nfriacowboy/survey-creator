@@ -1,12 +1,15 @@
 svd-splitter {
   display: table-cell;
-  min-width: 4px;
-  width: 4px;
-  max-width: 4px;
+  min-width: 4px !important;
+  width: 4px !important;
+  max-width: 4px !important;
   cursor: ew-resize;
   position: relative;
 
   div.svd-splitter {
+    min-width: 4px !important;
+    width: 4px !important;
+    max-width: 4px !important;
     background-color: lightgray;
     position: absolute;
     top: 0;

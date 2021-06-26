@@ -65,7 +65,7 @@ var packagePlatformJson = {
   },
   typings: "surveyeditor.d.ts",
   peerDependencies: {
-    bootstrap: "^3.3.6",
+    bootstrap: "^5.0.1",
     jquery: "^3.1.1",
     "ace-builds": "^1.4.10"
   },
@@ -109,7 +109,7 @@ var buildPlatformJson = {
   },
   typings: "survey-creator.d.ts",
   peerDependencies: {
-    bootstrap: "^3.3.6",
+    bootstrap: "^5.0.1",
     jquery: "^3.1.1",
     "ace-builds": "^1.2.2"
   },
@@ -122,7 +122,7 @@ var buildPlatformJson = {
 
 module.exports = function(options) {
   var packagePath =  __dirname + "/package/";
-  var buildPath = __dirname + "/build/";
+  var buildPath = __dirname + "/survey-creator/";
   var isProductionBuild = options.buildType === "prod";
 
   function createSVGBundle() {
