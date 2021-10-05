@@ -5,6 +5,7 @@ module.exports = {
       tsconfig: "tsconfig.test.json",
     },
   },
+  collectCoverage: true,
   roots: ["tests"],
   transform: {
     "^.+\\.(t|j)sx?$": "ts-jest",
@@ -14,7 +15,7 @@ module.exports = {
     "\\.(jpg|png|svg)$": "<rootDir>/tests/empty-module.js",
     "\\.html?$": "<rootDir>/tests/empty-module.js",
   },
-  testRegex: "(/tests/.*|(\\.|/)(test|spec))\\.tsx?$",
+  testRegex: "\/tests\/.*\.(tests?|spec)\.tsx?$",
   moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
   setupFiles: ["<rootDir>/jest.config.js", "jest-canvas-mock"], //see https://github.com/hustcc/jest-canvas-mock/issues/2
 };

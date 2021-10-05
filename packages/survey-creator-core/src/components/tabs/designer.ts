@@ -1,19 +1,16 @@
-import {
-  ActionBarItem,
-  Base,
-  IActionBarItem,
-  PageModel,
-  property,
-  SurveyModel
-} from "survey-core";
+import { Base, PageModel, property, SurveyModel, Action, ComputedUpdater } from "survey-core";
 import { ICreatorPlugin, CreatorBase } from "../../creator-base";
-import { DragDropHelper } from "../../dragdrophelper";
-import { getLocString } from "../../editorLocalization";
+import { DragDropSurveyElements } from "survey-core";
+import { PropertyGridModel } from "../../property-grid";
 import "./designer.scss";
+import { PropertyGridViewModel, PropertyGridViewModelBase } from "../../property-grid/property-grid-view-model";
+import { settings } from "../../settings";
+import { getLocString } from "../../editorLocalization";
 
 export class TabDesignerViewModel<T extends SurveyModel> extends Base {
   @property() newPage: PageModel;
   @property({ defaultValue: false }) showNewPage: boolean;
+  @property() pageCount: number;
   public creator: CreatorBase<T>;
 
   private createNewPage() {
@@ -23,17 +20,24 @@ export class TabDesignerViewModel<T extends SurveyModel> extends Base {
     newPage.updateCustomWidgets();
     newPage.setWasShown(true);
     newPage.setSurveyImpl(this.survey);
-    newPage["_addToSurvey"] = () => {
-      newPage["_addToSurvey"] = undefined;
-      this.survey.addPage(newPage);
+    var checkNewElementHandler = (sender: SurveyModel, options: any) => {
+      if (options.name === "elements" && newPage.elements.length > 0) {
+        newPage.onPropertyChanged.remove(checkNewElementHandler);
+        if (this.survey.pages.indexOf(newPage) > -1) return;
+        this.creator.startUndoRedoTransaction("Add new page");
+        this.survey.addPage(newPage);
+        this.creator.stopUndoRedoTransaction();
+      }
     };
+    newPage.onPropertyChanged.add(checkNewElementHandler);
     this.newPage = newPage;
-    DragDropHelper.newGhostPage = newPage;
+    DragDropSurveyElements.newGhostPage = newPage;
   }
 
   constructor(creator: CreatorBase<T>) {
     super();
     this.creator = creator;
+    this.initSurvey();
   }
   get survey() {
     return this.creator.survey;
@@ -41,6 +45,9 @@ export class TabDesignerViewModel<T extends SurveyModel> extends Base {
   private checkNewPageHandler: (sender: SurveyModel, options: any) => void;
   private surveyOnPropertyChanged: (sender: SurveyModel, options: any) => void;
   public initSurvey() {
+    if (!this.survey) return;
+    this.showNewPage = false;
+    this.newPage = undefined;
     this.checkNewPageHandler = (sender: SurveyModel, options: any) => {
       this.checkNewPage();
     };
@@ -53,7 +60,6 @@ export class TabDesignerViewModel<T extends SurveyModel> extends Base {
     this.survey.onQuestionRemoved.add(this.checkNewPageHandler);
     this.survey.onPanelAdded.add(this.checkNewPageHandler);
     this.survey.onPanelRemoved.add(this.checkNewPageHandler);
-
     this.checkNewPage();
   }
   public dispose() {
@@ -65,6 +71,7 @@ export class TabDesignerViewModel<T extends SurveyModel> extends Base {
     this.survey.onPanelRemoved.remove(this.checkNewPageHandler);
   }
   private checkNewPage() {
+    this.pageCount = this.survey.pageCount;
     if (this.canShowNewPage) {
       var pages = this.survey.pages;
       if (
@@ -86,30 +93,60 @@ export class TabDesignerViewModel<T extends SurveyModel> extends Base {
   }
 }
 
-export class TabDesignerPlugin<T extends SurveyModel>
-  implements ICreatorPlugin
-{
+export class TabDesignerPlugin<T extends SurveyModel> implements ICreatorPlugin {
   public model: TabDesignerViewModel<T>;
-  private undoAction: ActionBarItem;
-  private redoAction: ActionBarItem;
-  private surveySettingsAction: ActionBarItem;
+  public propertyGrid: PropertyGridViewModelBase;
+  private undoAction: Action;
+  private redoAction: Action;
+  private surveySettingsAction: Action;
+  private saveSurveyAction: Action;
+  private expandAction: Action;
+
   constructor(private creator: CreatorBase<T>) {
-    this.model = new TabDesignerViewModel<T>(creator);
-    creator.tabs.push({
-      id: "designer",
-      title: getLocString("ed.designer"),
-      componentContent: "svc-tab-designer",
-      data: this.model,
-      action: () => this.creator.makeNewViewActive("designer"),
-      active: () => this.creator.viewType === "designer"
+    creator.addPluginTab("designer", this);
+    const propertyGridModel = new PropertyGridModel(creator.survey as any as Base, creator);
+    this.propertyGrid = new PropertyGridViewModel(propertyGridModel, creator);
+    this.createActions().forEach(action => creator.toolbar.actions.push(action));
+    creator.registerShortcut("undo", {
+      hotKey: {
+        ctrlKey: true,
+        keyCode: 90,
+      },
+      macOsHotkey: {
+        keyCode: 90,
+      },
+      execute: () => this.undoAction.action()
     });
-    creator.addPlugin("designer", this);
+    creator.registerShortcut("redo", {
+      hotKey: {
+        ctrlKey: true,
+        keyCode: 89,
+      },
+      macOsHotkey: {
+        shiftKey: true,
+        keyCode: 90,
+      },
+      execute: () => this.redoAction.action()
+    });
   }
-  public activate(): void {}
+  public activate(): void {
+    this.model = new TabDesignerViewModel<T>(this.creator);
+    this.undoAction && (this.undoAction.visible = true);
+    this.redoAction && (this.redoAction.visible = true);
+    this.surveySettingsAction && (this.surveySettingsAction.visible = true);
+    this.expandAction && (this.expandAction.visible = !this.propertyGrid.visible);
+  }
   public deactivate(): boolean {
+    this.model = undefined;
+
+    this.undoAction && (this.undoAction.visible = false);
+    this.redoAction && (this.redoAction.visible = false);
+    this.surveySettingsAction.visible = false;
+    this.expandAction && (this.expandAction.visible = false);
     return true;
   }
-  public designerSurveyCreated(): void {
+  public update(): void {
+    if (!this.model) return;
     this.model.initSurvey();
     if (!!this.creator.undoRedoManager) {
       this.creator.undoRedoManager.canUndoRedoCallback = () => {
@@ -117,40 +154,71 @@ export class TabDesignerPlugin<T extends SurveyModel>
       };
     }
   }
-  public createActions(items: Array<IActionBarItem>) {
-    this.undoAction = new ActionBarItem({
+  public createActions() {
+    const items: Array<Action> = [];
+    this.undoAction = new Action({
       id: "icon-undo",
       iconName: "icon-undo",
-      title: "Undo",
+      title: getLocString("ed.undo"),
       showTitle: false,
-      visible: () => this.creator.viewType === "designer",
+      visible: this.creator.viewType === "designer",
       action: () => this.creator.undo()
     });
-    this.redoAction = new ActionBarItem({
+    this.redoAction = new Action({
       id: "icon-redo",
       iconName: "icon-redo",
-      title: "Redo",
+      title: getLocString("ed.redo"),
       showTitle: false,
-      visible: () => this.creator.viewType === "designer",
+      visible: this.creator.viewType === "designer",
       action: () => this.creator.redo()
     });
-    this.surveySettingsAction = new ActionBarItem({
-      id: "icon-settings",
+    this.surveySettingsAction = new Action({
+      id: "svd-settings",
       iconName: "icon-settings",
       needSeparator: true,
-      action: () => this.creator.selectElement(this.creator.survey),
+      action: () => {
+        if (!this.creator.showPropertyGrid) {
+          this.creator.showPropertyGrid = true;
+        }
+        this.creator.selectElement(this.creator.survey);
+      },
       active: this.isSurveySelected,
-      visible: () => this.creator.viewType === "designer",
+      visible: this.creator.activeTab === "designer",
       title: "Settings",
+      showTitle: false
+    });
+    this.saveSurveyAction = new Action({
+      id: "svd-save",
+      iconName: "icon-save",
+      action: () => this.creator.doSave(),
+      active: <any>new ComputedUpdater<boolean>(() => {
+        return this.creator.state === "modified";
+      }),
+      enabled: <any>new ComputedUpdater<boolean>(() => this.creator.state === "modified"),
+      visible: <any>new ComputedUpdater<boolean>(() => {
+        const isDesignerTabActive = this.creator.activeTab === "designer";
+        return this.creator.showSaveButton && isDesignerTabActive;
+      }),
+      title: this.creator.getLocString("ed.saveSurvey"),
+      tooltip: this.creator.getLocString("ed.saveSurveyTooltip"),
       showTitle: false
     });
     items.push(this.undoAction);
     items.push(this.redoAction);
+    items.push(this.saveSurveyAction);
     items.push(this.surveySettingsAction);
+    if (settings.propertyGrid.allowCollapse) {
+      this.expandAction = this.propertyGrid.createExpandAction(!this.creator.showPropertyGrid);
+      items.push(this.expandAction);
+    }
     this.updateUndeRedoActions();
     this.creator.onSelectedElementChanged.add((sender, options) => {
-      this.surveySettingsAction.active = this.isSurveySelected;
+      this.surveySettingsAction.active = this.isSettingsActive;
     });
+    this.creator.onShowPropertyGridVisiblityChanged.add((sender, options) => {
+      this.surveySettingsAction.active = this.isSettingsActive;
+    });
+    return items;
   }
   private updateUndeRedoActions() {
     if (!this.creator.undoRedoManager) return;
@@ -159,5 +227,8 @@ export class TabDesignerPlugin<T extends SurveyModel>
   }
   private get isSurveySelected(): boolean {
     return this.creator.isElementSelected(<any>this.creator.survey);
+  }
+  private get isSettingsActive(): boolean {
+    return this.creator.showPropertyGrid && this.isSurveySelected;
   }
 }

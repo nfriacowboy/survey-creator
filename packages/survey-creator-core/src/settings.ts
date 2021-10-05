@@ -4,12 +4,20 @@ import {
   JsonObjectProperty,
   MatrixDropdownColumn,
   Question,
-  SurveyModel,
+  SurveyModel
 } from "survey-core";
-
+/**
+ * List available question convert modes
+ */
+export enum QuestionConvertMode {
+  AllTypes,
+  CompatibleTypes
+}
 export var settings = {
   traslation: {
     sortByName: true,
+    //Set it to \xef\xbb\xbf; to tell system that it is UTF8 file. You can use other prefix as well
+    exportPrefix: ""
   },
   operators: {
     empty: [],
@@ -23,21 +31,70 @@ export var settings = {
     greater: ["!checkbox", "!imagepicker", "!boolean", "!file"],
     less: ["!checkbox", "!imagepicker", "!boolean", "!file"],
     greaterorequal: ["!checkbox", "!imagepicker", "!boolean", "!file"],
-    lessorequal: ["!checkbox", "!imagepicker", "!boolean", "!file"],
+    lessorequal: ["!checkbox", "!imagepicker", "!boolean", "!file"]
   },
-  visibleLogicActions: [],
   defaultNewSurveyJSON: { pages: [{ name: "page1" }] },
-
-  //TODO add maximumColumnCount
+  logic: {
+    visibleActions: [],
+    logicItemTitleMaxChars: 50
+  },
+  /**
+   * Determines which types of questions the conversion will be available for.
+   */
+  questionConvertMode: QuestionConvertMode.AllTypes,
+  propertyGrid: {
+    allowCollapse: true,
+    useButtonGroup: true,
+    maxCharsInButtonGroup: 25,
+    showNavigationButtons: false,
+    maximumColumnsCount: 0,
+    maximumChoicesCount: 0,
+    maximumRowsCount: 0,
+    maximumRateValues: 0,
+    generalTabName: "general"
+  },
+  /**
+   * Notification settings
+   */
+  notifications: {
+    lifetime: 2000
+  },
+  /**
+   * Auto save parameters
+   */
+  autoSave: {
+    delay: 500
+  },
+  /**
+   * Drag Drop Settings
+   */
+  dragDrop: {
+    restrictDragQuestionBetweenPages: false
+  },
+  /**
+   * Creator layout settings
+   */
+  layout: {
+    showTabs: true,
+    showToolbar: true
+  }
 };
+export interface ICollectionItemAllowOperations {
+  allowDelete: boolean;
+  allowEdit: boolean;
+}
 
 export interface ISurveyCreatorOptions {
   alwaySaveTextInPropertyEditors: boolean;
   readOnly: boolean;
   maxLogicItemsInCondition: number;
   showTitlesInExpressions: boolean;
+  showObjectTitles: boolean;
   allowEditExpressionsInTextEditor: boolean;
   maximumColumnsCount: number;
+  maximumChoicesCount: number;
+  maximumRowsCount: number;
+  maximumRateValues: number;
   getObjectDisplayName(obj: Base, reason: string, displayName: string): string;
   onCanShowPropertyCallback(
     object: any,
@@ -46,6 +103,11 @@ export interface ISurveyCreatorOptions {
     parentObj: any,
     parentProperty: JsonObjectProperty
   ): boolean;
+  onPropertyEditorCreatedCallback(
+    object: any,
+    property: JsonObjectProperty,
+    editor: Question
+  );
   onIsPropertyReadOnlyCallback(
     obj: Base,
     property: JsonObjectProperty,
@@ -64,6 +126,13 @@ export interface ISurveyCreatorOptions {
     collection: Array<Base>,
     item: Base
   ): boolean;
+  onCollectionItemAllowingCallback(
+    obj: Base,
+    property: JsonObjectProperty,
+    collection: Array<Base>,
+    item: Base,
+    options: ICollectionItemAllowOperations
+  ): void;
   onItemValueAddedCallback(
     obj: Base,
     propertyName: string,
@@ -86,12 +155,6 @@ export interface ISurveyCreatorOptions {
     value: any
   ): string;
   onValueChangingCallback(options: any);
-  //onPropertyValueChanged(
-  onSurveyElementPropertyValueChanged(
-    property: JsonObjectProperty,
-    obj: any,
-    newValue: any
-  );
   onGetElementEditorTitleCallback(obj: Base, title: string): string;
   startUndoRedoTransaction();
   stopUndoRedoTransaction();
@@ -106,6 +169,10 @@ export interface ISurveyCreatorOptions {
     editor: any,
     list: any[]
   );
+  onConditionGetTitleCallback(
+    expression: string,
+    title: string
+  ): string;
 }
 
 export class EmptySurveyCreatorOptions implements ISurveyCreatorOptions {
@@ -113,8 +180,13 @@ export class EmptySurveyCreatorOptions implements ISurveyCreatorOptions {
   readOnly: boolean;
   maxLogicItemsInCondition: number;
   showTitlesInExpressions: boolean;
-  allowEditExpressionsInTextEditor: boolean;
-  maximumColumnsCount: number;
+  showObjectTitles: boolean;
+  allowEditExpressionsInTextEditor: boolean = true;
+  maximumColumnsCount: number = settings.propertyGrid.maximumColumnsCount;
+  maximumChoicesCount: number = settings.propertyGrid.maximumChoicesCount;
+  maximumRowsCount: number = settings.propertyGrid.maximumRowsCount;
+  maximumRateValues: number = settings.propertyGrid.maximumRateValues;
+
   getObjectDisplayName(obj: Base, reason: string, displayName: string): string {
     return displayName;
   }
@@ -127,6 +199,11 @@ export class EmptySurveyCreatorOptions implements ISurveyCreatorOptions {
   ): boolean {
     return true;
   }
+  onPropertyEditorCreatedCallback(
+    object: any,
+    property: JsonObjectProperty,
+    editor: Question
+  ) { }
   onIsPropertyReadOnlyCallback(
     obj: Base,
     property: JsonObjectProperty,
@@ -152,22 +229,29 @@ export class EmptySurveyCreatorOptions implements ISurveyCreatorOptions {
   ): boolean {
     return true;
   }
+  onCollectionItemAllowingCallback(
+    obj: Base,
+    property: JsonObjectProperty,
+    collection: Array<Base>,
+    item: Base,
+    options: ICollectionItemAllowOperations
+  ): void { }
   onItemValueAddedCallback(
     obj: Base,
     propertyName: string,
     itemValue: ItemValue,
     itemValues: Array<ItemValue>
-  ) {}
+  ) { }
   onMatrixDropdownColumnAddedCallback(
     matrix: Question,
     column: MatrixDropdownColumn,
     columns: Array<MatrixDropdownColumn>
-  ) {}
+  ) { }
   onSetPropertyEditorOptionsCallback(
     propertyName: string,
     obj: Base,
     editorOptions: any
-  ) {}
+  ) { }
   onGetErrorTextOnValidationCallback(
     propertyName: string,
     obj: Base,
@@ -175,18 +259,12 @@ export class EmptySurveyCreatorOptions implements ISurveyCreatorOptions {
   ): string {
     return null;
   }
-  onValueChangingCallback(options: any) {}
-  onSurveyElementPropertyValueChanged(
-    //onPropertyValueChanged(
-    property: JsonObjectProperty,
-    obj: any,
-    newValue: any
-  ) {}
+  onValueChangingCallback(options: any) { }
   onGetElementEditorTitleCallback(obj: Base, title: string): string {
     return title;
   }
-  startUndoRedoTransaction() {}
-  stopUndoRedoTransaction() {}
+  startUndoRedoTransaction() { }
+  stopUndoRedoTransaction() { }
   createSurvey(
     json: any,
     reason: string,
@@ -199,5 +277,11 @@ export class EmptySurveyCreatorOptions implements ISurveyCreatorOptions {
     obj: Base,
     editor: any,
     list: any[]
-  ) {}
+  ) { }
+  onConditionGetTitleCallback(
+    expression: string,
+    title: string
+  ): string {
+    return title;
+  }
 }

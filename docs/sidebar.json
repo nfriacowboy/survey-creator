@@ -6,16 +6,34 @@
     },
     {
       "Name": "Add-Survey-Creator-into-your-Web-Page",
-      "Title": "Add Survey Creator into you Web Page"
+      "Title": "Add Survey Creator into Your Web Page"
     },
     {
+      "Name": "Troubleshooting",
+      "Title": "Troubleshooting",
+      "Items": [
+        {     
+          "Name": "Migrate-from-V1-to-V2",
+          "Title": "Migration Guide - from V1 to V2"
+        },
+        {     
+          "Name": "React-Performance-Problems",
+          "Title": "React: Visualization of drag-and-drop operations is slow for large surveys"
+        }        
+      ] 
+    },    
+    {
       "Name": "Build-Component-Questions",
-      "Title": "Componets: Simplify and Enrich SurveyJS Creator functionality"
+      "Title": "Components: Simplify and Enrich SurveyJS Creator Functionality"
     },
     {
       "Name": "Create-Custom-Widget",
-      "Title": "Create custom widget"
+      "Title": "Create Custom Widget"
     },
+    {
+      "Name": "End-User-Guide",
+      "Title": "End-User Guide"
+    },    
     {
       "Name": "BuilderOverview",
       "Title": "Overview",

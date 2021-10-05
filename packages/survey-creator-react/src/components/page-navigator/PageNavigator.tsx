@@ -1,15 +1,15 @@
 import {
   Base,
+  IAction,
   SurveyModel,
   PageModel,
-  unwrap,
-  AdaptiveActionBarItemWrapper,
+  unwrap
 } from "survey-core";
 import {
   SurveyElementBase,
   SvgIcon,
   Popup,
-  IActionBarItem,
+  attachKey2click
 } from "survey-react-ui";
 import { CreatorBase, PageNavigatorViewModel } from "@survey/creator";
 import React from "react";
@@ -42,10 +42,13 @@ export class SurveyPageNavigator extends SurveyElementBase<
     if (!this.model.visible) {
       return null;
     }
+    let className = "svc-page-navigator__selector";
+    if (this.model.isPopupOpened)
+      className += " svc-page-navigator__selector--opened";
     return (
       <div className="svc-page-navigator">
         <div
-          className="svc-page-navigator__selector"
+          className={className}
           onClick={() => this.model.togglePageSelector()}
           title={"text"}
         >
@@ -71,14 +74,14 @@ export class SurveyPageNavigator extends SurveyElementBase<
   }
 }
 export class SurveyPageNavigatorItem extends SurveyElementBase<any, any> {
-  constructor(props: IActionBarItem) {
+  constructor(props: IAction) {
     super(props);
   }
   protected getStateElement(): Base {
     return this.props.item as Base;
   }
   renderElement(): JSX.Element {
-    var item = this.props.item;
+    const item = this.props.item;
     let className: string = "svc-page-navigator-item-content";
     if (unwrap(item.active)) {
       className += " svc-page-navigator-item--selected";
@@ -88,7 +91,7 @@ export class SurveyPageNavigatorItem extends SurveyElementBase<any, any> {
     }
     return (
       <div className="svc-page-navigator-item">
-        <div
+        {attachKey2click(<div
           className={className}
           onClick={() => item.action(item)}
           title={item.title}
@@ -98,7 +101,7 @@ export class SurveyPageNavigatorItem extends SurveyElementBase<any, any> {
             <span className="svc-text svc-text--normal">{item.title}</span>
             <span className="svc-page-navigator-item__dot"></span>
           </div>
-        </div>
+        </div>)}
       </div>
     );
   }

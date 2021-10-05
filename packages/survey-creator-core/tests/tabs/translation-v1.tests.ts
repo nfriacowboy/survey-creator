@@ -56,12 +56,9 @@ test("Survey child groups", () => {
   expect(root.groups).toHaveLength(1);
   expect(root.items).toHaveLength(1);
   expect(root.groups[0].obj.getType()).toEqual("page");
-  expect(root.groups[0].expanded).toBeTruthy();
-  expect(root.groups[0].showHeader).toBeFalsy();
   root.reset();
   expect(root.groups).toHaveLength(1);
   expect(root.groups[0].groups).toHaveLength(1);
-  expect(root.groups[0].groups[0].expanded).toBeTruthy();
   expect(root.groups[0].groups[0].showHeader).toBeTruthy();
 });
 test("Survey child groups, #2", () => {
@@ -411,6 +408,25 @@ test("Export to array", () => {
     ""
   ]);
 });
+test("Export settings.translation.prefix", () => {
+  var survey = new SurveyModel({
+    elements: [
+      {
+        type: "text",
+        name: "question1",
+        title: {
+          default: "title en",
+          de: "title de"
+        }
+      }
+    ]
+  });
+  var translation = new Translation(survey);
+  const exportStr1 = translation.exportToCSV();
+  settings.traslation.exportPrefix = "12345;";
+  const exportStr2 = translation.exportToCSV();
+  expect(exportStr2).toEqual("12345;" + exportStr1);
+});
 test("Merging a locale with default", () => {
   surveyLocalization.defaultLocale = "de";
   const survey: SurveyModel = new SurveyModel({
@@ -593,30 +609,7 @@ test("Localize the group and item text", () => {
   expect(choices);
   expect(choices.text).toEqual("Choices");
 });
-test("Two new functions: expandAll(), collapseAll()", () => {
-  const survey: SurveyModel = new SurveyModel();
-  survey.addNewPage("page1");
-  survey.addNewPage("page2");
-  survey.pages[0].addNewQuestion("text", "q1");
-  survey.pages[0].addNewQuestion("text", "q2");
-  survey.pages[1].addNewQuestion("text", "q3");
-  survey.pages[1].addNewQuestion("text", "q4");
-  const translation: Translation = new Translation(survey);
-  const root: TranslationGroup = translation.root;
-  expect(root.groups).toHaveLength(2);
-  expect(root.groups[0].expanded).toBeFalsy();
-  expect(root.groups[1].expanded).toBeFalsy();
-  translation.expandAll();
-  expect(root.groups[0].expanded).toBeTruthy();
-  expect(root.groups[1].expanded).toBeTruthy();
-  expect(root.groups[0].groups[0].expanded).toBeTruthy();
-  translation.collapseAll();
-  expect(root.isRoot).toBeTruthy();
-  expect(root.expanded).toBeTruthy();
-  expect(root.groups[0].expanded).toBeFalsy();
-  expect(root.groups[1].expanded).toBeFalsy();
-  expect(root.groups[0].groups[0].expanded).toBeFalsy();
-});
+
 test("check LocalizableStrings/dataList property", () => {
   const survey: SurveyModel = new SurveyModel();
   survey.addNewPage("page1");

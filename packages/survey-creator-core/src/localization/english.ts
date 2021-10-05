@@ -16,7 +16,9 @@ export var enStrings = {
     deletePanel: "Delete Panel",
     deleteQuestion: "Delete Question",
     convertTo: "Convert to",
-    drag: "Drag element"
+    drag: "Drag element",
+    license:
+      "Please purchase a SurveyJS Creator developer license to use it in your app"
   },
   //questionTypes
   qt: {
@@ -44,7 +46,7 @@ export var enStrings = {
     buttongroup: "Button group",
     flowpanel: "Flow Panel"
   },
-  //Strings in Editor
+  //Strings in SurveyJS Creator
   ed: {
     defaultLocale: "Default ({0})",
     survey: "Survey",
@@ -55,6 +57,8 @@ export var enStrings = {
     //hideObjectProperties: "Hide Object Properties",
     showPanel: "Show Panel",
     hidePanel: "Hide Panel",
+    prevSelected: "Select previous",
+    nextSelected: "Select next",
     //editSurvey: "Edit Survey",
     surveyTypeName: "Survey",
     pageTypeName: "Page",
@@ -97,6 +101,7 @@ export var enStrings = {
     generateReadableJSON: "Generate Readable JSON",
     toolbox: "Toolbox",
     "property-grid": "Properties",
+    propertyGridFilteredTextPlaceholder: "Type to search...",
     toolboxGeneralCategory: "General",
     //delSelObject: "Delete selected object",
     //editSelObject: "Edit selected object",
@@ -113,6 +118,8 @@ export var enStrings = {
     saved: "Saved",
     propertyEditorError: "Error:",
     saveError: "Error! Editor content is not saved.",
+    translationPropertyGridTitle: "Translation Setting",
+    translationLanguages: "Languages",
     translationAddLanguage: "Select language to translate",
     translationShowAllStrings: "Show all strings",
     translationShowAllPages: "Show all pages",
@@ -120,22 +127,29 @@ export var enStrings = {
     translationExportToSCVButton: "Export to CSV",
     translationImportFromSCVButton: "Import from CSV",
     translationMergeLocaleWithDefault: "Merge {0} with default locale",
+    translationPlaceHolder: "Translation...",
     bold: "Bold",
     italic: "Italic",
     underline: "Underline",
     fpAddQuestion: "Add question...",
     selectPage: "Select page...",
     chooseElement: "Choose element...",
+    htmlPlaceHolder: "HTML content will be here.",
+    panelPlaceHolder: "Drop a question from the toolbox here.",
+    addNewQuestion: "Add Question",
+    addNewTypeQuestion: "Add {0}", //{0} is localizable question type
+    chooseLogoPlaceholder: "[LOGO]",
     //completedHtmlOnConditionItemText: "Show if:",
     lg: {
       addNewItem: "", //By default the value is taken from pe.addNew 'Add New', you can set it to 'Add New Rule' for example.
       //Logic tab strings
-      page_visibilityName: "Page visibility",
-      panel_visibilityName: "Panel visibility",
-      panel_enableName: "Panel enable/disable",
-      question_visibilityName: "Question visibility",
-      question_enableName: "Question enable/disable",
-      question_requireName: "Question optional required",
+      empty_tab: "Create a rule to customize the flow of the survey.",
+      page_visibilityName: "Show (hide) page",
+      panel_visibilityName: "Show (hide) panel",
+      panel_enableName: "Enable (disable) panel",
+      question_visibilityName: "Show (hide) question",
+      question_enableName: "Enable (disable) question",
+      question_requireName: "Make question required",
       trigger_completeName: "Complete survey",
       trigger_setvalueName: "Set question value",
       trigger_copyvalueName: "Copy question value",
@@ -169,6 +183,7 @@ export var enStrings = {
         "If the logic expression returns true, then the default text for the 'Thank you page' is changed to the given one.",
 
       itemExpressionText: "When expression: '{0}' returns true:", //{0} - the expression
+      itemEmptyExpressionText: "New rule is not set",
       page_visibilityText: "Make page {0} visible", //{0} page name
       panel_visibilityText: "Make panel {0} visible", //{0} panel name
       panel_enableText: "Make panel {0} enable", //{0} panel name
@@ -181,8 +196,10 @@ export var enStrings = {
       trigger_skipText: "Survey skip to the question {0}", //{0} question name
       trigger_runExpressionText1: "Run expression: '{0}'", //{0} the expression
       trigger_runExpressionText2: " and set its result into question: {0}", //{0} question name
-      completedHtmlOnConditionText:
-        "Show custom text for the 'Thank you page'.",
+      completedHtmlOnConditionText: "Show custom text for the 'Thank you page'.",
+
+      showAllQuestions: "Show all questions",
+      showAllActionTypes: "Show all action types",
 
       conditions: "Condition(s)",
       actions: "Action(s)",
@@ -210,6 +227,7 @@ export var enStrings = {
     apply: "Apply",
     ok: "OK",
     save: "Save",
+    clear: "Clear",
     saveTooltip: "Save",
     cancel: "Cancel",
     reset: "Reset",
@@ -219,6 +237,8 @@ export var enStrings = {
     add: "Add",
     addNew: "Add New",
     addItem: "Click to add an item...",
+    removeItem: "Click to remove the item...",
+    dragItem: "Drag the item",
     addOther: "Other",
     addSelectAll: "Select All",
     addNone: "None",
@@ -228,6 +248,7 @@ export var enStrings = {
     backTooltip: "Return without saving",
     saveAndBack: "Save and return",
     saveAndBackTooltip: "Save and return",
+    doneEditing: "Done",
     // itemValueEdit: "Visible If",
     editChoices: "Edit Choices",
     showChoices: "Show Choices",
@@ -235,6 +256,9 @@ export var enStrings = {
     empty: "<empty>",
     emptyValue: "Value is empty",
     fastEntry: "Fast Entry",
+    fastEntryNonUniqueError: "Value '{0}' is not unique",
+    fastEntryChoicesCountError:
+      "Please limit the number of items from {0} to {1}",
     formEntry: "Form Entry",
     testService: "Test the service",
     itemSelectorEmpty: "Please select the element",
@@ -272,6 +296,7 @@ export var enStrings = {
     path: "Path",
     valueName: "Value name",
     titleName: "Title name",
+    allowEmptyResponse: "Allow empty respose",
     titlePlaceholder: "Input title here",
     surveyTitlePlaceholder: "Input survey title here",
     pageTitlePlaceholder: "Input page title here",
@@ -318,6 +343,7 @@ export var enStrings = {
     maxRateDescription: "Maximum rate description",
     inputType: "Input type",
     optionsCaption: "Options caption",
+    showOptionsCaption: "Show options caption",
     defaultValue: "Default value",
     cellsDefaultRow: "Default cells texts",
 
@@ -332,6 +358,11 @@ export var enStrings = {
     or: "Or",
     remove: "Remove",
     addCondition: "Add condition",
+    if: "If",
+    then: "Then",
+    setToName: "to",
+    fromName: "from",
+    ruleIsNotSet: "Rule is incorrect",
 
     //survey
     showTitle: "Show/hide title",
@@ -339,6 +370,7 @@ export var enStrings = {
     locale: "Default language",
     simulator: "Choose device",
     landscapeOrientation: "Landscape",
+    portraitOrientation: "Portrait",
     mode: "Mode (edit/read only)",
     clearInvisibleValues: "Clear invisible values",
     cookieName: "Cookie name (to disable run survey two times locally)",
@@ -536,7 +568,14 @@ export var enStrings = {
     questionPerPage: "question per page",
     noPreview: "no preview",
     showAllQuestions: "show preview with all questions",
-    showAnsweredQuestions: "show preview with answered questions"
+    showAnsweredQuestions: "show preview with answered questions",
+    pages: "pages",
+    questions: "questions",
+    requiredQuestions: "required questions",
+    correctQuestions: "correct questions",
+    buttons: "buttons",
+    underInput: "under input",
+    underTitle: "under title"
   },
   //Operators
   op: {

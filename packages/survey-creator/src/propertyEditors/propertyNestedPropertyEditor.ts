@@ -249,7 +249,8 @@ export class SurveyNestedPropertyEditorItem {
       this.obj,
       this.getClassName(),
       this.options,
-      true
+      true,
+      this.isReadOnly
     );
     res.setParentList(this.parentList);
     return res;
@@ -268,9 +269,9 @@ export class SurveyNestedPropertyEditorColumn {
     var text = editorLocalization.hasString("pel." + this.property.name)
       ? editorLocalization.getString("pel." + this.property.name)
       : editorLocalization.getPropertyNameInEditor(
-          this.property.name,
-          this.property.displayName
-        );
+        this.property.name,
+        this.property.displayName
+      );
     return text ? text : this.property.name;
   }
 }

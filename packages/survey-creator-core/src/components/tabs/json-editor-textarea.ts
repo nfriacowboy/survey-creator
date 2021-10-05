@@ -15,6 +15,7 @@ export class TextareaJsonEditorModel extends JsonEditorBaseModel {
 
   constructor(creator: CreatorBase<SurveyModel>) {
     super(creator);
+    this.onPluginActivate();
   }
 
   public get text(): string {
@@ -37,26 +38,24 @@ export class TextareaJsonEditorModel extends JsonEditorBaseModel {
   protected setErrors(errors: any[]): void {
     this._errors = errors;
   }
-  public onEditorActivated(): void {}
 }
 
 export class TabJsonEditorTextareaPlugin
-  extends TabJsonEditorBasePlugin<TextareaJsonEditorModel>
+  extends TabJsonEditorBasePlugin
   implements ICreatorPlugin
 {
   constructor(creator: CreatorBase<SurveyModel>) {
     super(creator);
-    this.model = new TextareaJsonEditorModel(creator);
-    creator.tabs.push({
-      id: "editor",
-      title: getLocString("ed.jsonEditor"),
-      componentContent: "svc-tab-json-editor-textarea",
-      data: this,
-      action: () => {
-        creator.makeNewViewActive("editor");
-      },
-      active: () => creator.viewType === "editor"
-    });
-    creator.addPlugin("editor", this);
+    creator.addPluginTab(
+      "editor",
+      this,
+      getLocString("ed.jsonEditor"),
+      "svc-tab-json-editor-textarea"
+    );
+  }
+  protected createModel(
+    creator: CreatorBase<SurveyModel>
+  ): JsonEditorBaseModel {
+    return new TextareaJsonEditorModel(creator);
   }
 }

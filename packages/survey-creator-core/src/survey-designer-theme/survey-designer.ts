@@ -5,8 +5,8 @@ export var surveyDesignerCss = {
   body: "sd-body",
   bodyEmpty: "sd-body sd-body--empty",
   footer: "sd-footer sd-body__footer sd-clearfix",
-  title: "",
-  description: "",
+  title: "sd-title",
+  description: "sd-description",
   logo: "sd-logo",
   logoImage: "sd-logo__image",
   headerText: "sd-header__text",
@@ -26,7 +26,7 @@ export var surveyDesignerCss = {
     titleOnExpand: "sd-panel__title--expanded",
     titleOnError: "sd-panel__title--error",
     description: "sd-description sd-panel__description",
-    container: "sd-panel sd-row__panel",
+    container: "sd-element-with-frame sd-panel sd-row__panel",
     content: "sd-panel__content",
     icon: "sd-panel__icon",
     iconExpanded: "sd-panel__icon--expanded",
@@ -49,7 +49,9 @@ export var surveyDesignerCss = {
     progress: "sd-progress",
     progressBar: "sd-progress__bar",
     progressText: "sd-paneldynamic__progress-text",
-    separator: "sd-paneldynamic__separator"
+    separator: "sd-paneldynamic__separator",
+    panelWrapper: "sd-paneldynamic__panel-wrapper",
+    panelWrapperInRow: "sd-paneldynamic__panel-wrapper--in-row"
   },
   progress: "sd-progress sd-body__progress",
   progressBar: "sd-progress__bar",
@@ -63,10 +65,12 @@ export var surveyDesignerCss = {
   pageTitle: "sd-title sd-page__title",
   pageDescription: "sd-description sd-page__description",
   row: "sd-row sd-clearfix",
+  rowMultiple: "sd-row--multiple",
   question: {
-    mainRoot: "sd-question sd-row__question",
-    flowRoot: "sd-question sd-row__question sd-row__question--flow",
+    mainRoot: "sd-element-with-frame sd-question sd-row__question",
+    flowRoot: "sd-element-with-frame sd-question sd-row__question sd-row__question--flow",
     asCell: "sd-table__cell",
+    answered: "sd-question--answered",
     header: "sd-question__header",
     headerLeft: "sd-question__header--location--left",
     headerTop: "sd-question__header--location--top",
@@ -81,7 +85,7 @@ export var surveyDesignerCss = {
     number: "sd-question__num",
     description: "sd-description sd-question__description",
     descriptionUnderInput: "sd-description sd-question__description",
-    comment: "sd-comment",
+    comment: "sd-input sd-comment",
     required: "sd-question--required",
     titleRequired: "sd-question__title--required",
     indent: 20,
@@ -113,7 +117,7 @@ export var surveyDesignerCss = {
     itemDecorator: "sd-item__svg sd-checkbox__svg",
     controlLabel: "sd-item__control-label",
     materialDecorator: "sd-item__decorator sd-checkbox__decorator",
-    other: "sd-comment sd-question__other",
+    other: "sd-input sd-comment sd-question__other",
     column: "sd-selectbase__column"
   },
   radiogroup: {
@@ -129,26 +133,30 @@ export var surveyDesignerCss = {
     itemDecorator: "sd-item__svg sd-radio__svg",
     controlLabel: "sd-item__control-label",
     materialDecorator: "sd-item__decorator sd-radio__decorator",
-    other: "sd-comment sd-question__other",
+    other: "sd-input sd-comment sd-question__other",
     clearButton: "sd-btn sd-selectbase__clear-btn",
     column: "sd-selectbase__column"
   },
   boolean: {
-    mainRoot: "sd-question sd-row__question sd-question--boolean",
+    mainRoot: "sd-element-with-frame sd-question sd-row__question sd-question--boolean",
     root: "",
-    item: "sd-checkbox",
-    control: "sd-checkbox__control",
-    itemChecked: "sd-checkbox--checked",
-    itemIndeterminate: "sd-checkbox--indeterminate",
-    itemDisabled: "sd-checkbox--disabled",
-    label: "sd-checkbox__caption",
+    item: "sd-boolean",
+    control: "sd-boolean__control sd-visuallyhidden",
+    itemChecked: "sd-boolean--checked",
+    itemIndeterminate: "sd-boolean--indeterminate",
+    itemDisabled: "sd-boolean--disabled",
+    label: "sd-boolean__label",
+    switch: "sd-boolean__switch",
     disabledLabel: "sd-checkbox__label--disabled",
     itemDecorator: "sd-checkbox__hidden",
-    materialDecorator: "sd-checkbox__rectangle"
+    materialDecorator: "sd-checkbox__rectangle",
+    sliderText: "",
+    slider: "sd-boolean__thumb"
   },
   text: {
     root: "sd-input sd-text",
     small: "sd-row__question--small",
+    controlDisabled: "sd-input--disabled",
     onError: "sd-input--error"
   },
   multipletext: {
@@ -163,7 +171,7 @@ export var surveyDesignerCss = {
     small: "sd-row__question--small",
     control: "sd-input sd-dropdown",
     selectWrapper: "",
-    other: "sd-comment sd-question__other",
+    other: "sd-input sd-comment sd-question__other",
     onError: "sd-input--error",
     label: "sd-selectbase__label",
     item: "sd-item sd-radio sd-selectbase__item",
@@ -172,10 +180,12 @@ export var surveyDesignerCss = {
     itemHover: "sd-item--allowhover sd-radio--allowhover",
     itemControl: "sd-visuallyhidden sd-item__control sd-radio__control",
     itemDecorator: "sd-item__svg sd-radio__svg",
+    controlDisabled: "sd-input--disabled",
     controlLabel: "sd-item__control-label",
     materialDecorator: "sd-item__decorator sd-radio__decorator"
   },
   imagepicker: {
+    mainRoot: "sd-element-with-frame sd-question sd-row__question sd-scrollable",
     root: "sd-imagepicker",
     item: "sd-imagepicker__item",
     itemInline: "sd-imagepicker__item--inline",
@@ -187,9 +197,10 @@ export var surveyDesignerCss = {
     image: "sd-imagepicker__image",
     itemText: "sd-imagepicker__text",
     clearButton: "sd-btn",
-    other: "sd-comment sd-question__other"
+    other: "sd-input sd-comment sd-question__other"
   },
   matrix: {
+    mainRoot: "sd-element-with-frame sd-question sd-row__question sd-scrollable",
     tableWrapper: "sd-matrix",
     root: "sd-table",
     rowError: "sd-matrix__row--error",
@@ -207,11 +218,13 @@ export var surveyDesignerCss = {
     cellTextDisabled: "sd-matrix__text--disabled"
   },
   matrixdropdown: {
+    mainRoot: "sd-element-with-frame sd-question sd-row__question sd-scrollable",
     root: "sd-table",
     cell: "sd-table__cell",
     headerCell: "sd-table__cell sd-table__cell--header"
   },
   matrixdynamic: {
+    mainRoot: "sd-element-with-frame sd-question sd-row__question sd-scrollable",
     root: "sd-table sd-matrixdynamic",
     cell: "sd-table__cell",
     headerCell: "sd-table__cell sd-table__cell--header",
@@ -231,39 +244,47 @@ export var surveyDesignerCss = {
   rating: {
     root: "sd-rating",
     item: "sd-rating__item",
+    itemHover: "sd-rating__item--allowhover",
     selected: "sd-rating__item--selected",
     minText: "sd-rating__item-text sd-rating__min-text",
     itemText: "sd-rating__item-text",
     maxText: "sd-rating__item-text sd-rating__max-text",
-    disabled: "sd-rating__item--disabled"
+    itemDisabled: "sd-rating__item--disabled"
   },
   comment: {
-    root: "sd-comment",
-    small: "sd-row__question--small"
+    root: "sd-input sd-comment",
+    small: "sd-row__question--small",
+    controlDisabled: "sd-input--disabled",
   },
   expression: "",
   file: {
     root: "sd-file",
-    other: "sd-comment sd-question__other",
+    other: "sd-input sd-comment sd-question__other",
     placeholderInput: "sd-visuallyhidden",
     preview: "sd-file__preview",
     fileSign: "sd-hidden",
+    fileList: "sd-file__list",
     fileSignBottom: "sd-file__sign",
     fileDecorator: "sd-file__decorator",
+    fileDecoratorDrag: "sd-file__decorator--drag",
     fileInput: "sd-visuallyhidden",
     noFileChosen: "sd-description sd-file__no-file-chosen",
-    chooseFile: "sd-btn sd-file__choose-btn",
+    chooseFile: "sd-file__btn sd-file__choose-btn",
     disabled: "sd-file__choose-btn--disabled",
     removeButton: "sd-hidden",
-    removeButtonBottom: "sd-btn sd-file__clean-btn",
+    removeButtonBottom: "sd-file__btn sd-file__clean-btn",
     removeFile: "sd-hidden",
-    removeFileSvg: "sd-file__remove-svg",
-    wrapper: "sd-file__wrapper"
+    removeFileSvg: "sd-hidden",
+    wrapper: "sd-file__wrapper",
+    defaultImage: "sd-file__default-image",
+    removeFileButton: "sd-file__remove-file-button",
+    dragAreaPlaceholder: "sd-file__drag-area-placeholder"
   },
   signaturepad: {
     root: "sd-signaturepad sjs_sp_container",
     small: "sd-row__question--small",
     controls: "sjs_sp_controls",
+    placeholder: "sjs_sp_placeholder",
     clearButton: "sjs_sp_clear"
   },
   saveData: {

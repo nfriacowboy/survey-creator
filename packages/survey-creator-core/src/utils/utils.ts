@@ -6,11 +6,14 @@ function getNumericFromString(str: string): string {
   for (var i = str.length - 1; i >= 0; i--) {
     if (str[i] >= "0" && str[i] <= "9") {
       num = str[i] + num;
+    } else {
+      if (!!num) return num;
     }
     if (num.length == 10) break;
   }
   return num;
 }
+
 const opositeValues = {
   true: "false",
   True: "False",
@@ -59,11 +62,16 @@ export function getNextValue(prefix: string, values: any[]): string | number {
     var isNumber = baseValue === num;
     var newValue;
     do {
-      newValue = isNumber
-        ? ++num
-        : str.substr(0, numStrIndex) +
-          (num++).toString() +
-          str.substr(numStrIndex + numStr.length);
+      if (isNumber) {
+        newValue = ++num;
+      }
+      else {
+        var newNum = (num++).toString();
+        while (numStr.length > newNum.length) {
+          newNum = "0" + newNum;
+        }
+        newValue = str.substr(0, numStrIndex) + newNum + str.substr(numStrIndex + numStr.length);
+      }
     } while (hasValueInArray(values, newValue));
     return newValue;
   }
@@ -196,5 +204,24 @@ export function toggleHovered(e: MouseEvent, element: HTMLElement) {
     e[processedFlagName] = true;
   } else {
     element.className = element.className.replace(" svc-hovered", "");
+  }
+}
+
+export function clearNewLines(text: string) {
+  return text.replace(new RegExp("(\r\n|\n|\r)", "gm"), "");
+}
+
+export function select(element: any) {
+  var range, selection;
+  if (window.getSelection && document.createRange) {
+    selection = window.getSelection();
+    range = document.createRange();
+    range.selectNodeContents(element);
+    selection.removeAllRanges();
+    selection.addRange(range);
+  } else if (document["selection"] && document.body["createTextRange"]) {
+    range = document.body["createTextRange"]();
+    range.moveToElementText(element);
+    range.select();
   }
 }

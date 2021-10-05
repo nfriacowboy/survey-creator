@@ -1,4 +1,5 @@
 import * as Survey from "survey-core";
+import { QuestionConvertMode, settings } from "./settings";
 
 export class QuestionConverter {
   public static convertInfo = {};
@@ -12,18 +13,18 @@ export class QuestionConverter {
     className: string,
     availableTypes: Array<string> = null
   ): Array<string> {
-    var res = QuestionConverter.convertInfo[className];
+    var res = settings.questionConvertMode == QuestionConvertMode.AllTypes
+      ? getAllQuestionTypes(className)
+      : QuestionConverter.convertInfo[className];
     if (!res) return [];
     if (
       !!availableTypes &&
       Array.isArray(availableTypes) &&
       availableTypes.length > 0
     ) {
-      for (var i = res.length - 1; i >= 0; i--) {
-        if (availableTypes.indexOf(res[i]) < 0) {
-          res.splice(i, 1);
-        }
-      }
+      res = res
+        .filter((item) => availableTypes.indexOf(item) >= 0)
+        .sort((a, b) => availableTypes.indexOf(a) - availableTypes.indexOf(b));
     }
     return !!res ? res : [];
   }
@@ -42,6 +43,17 @@ export class QuestionConverter {
     newQuestion.onSurveyLoad();
     return <Survey.Question>newQuestion;
   }
+}
+
+function getAllQuestionTypes(className: string): Array<string> {
+  var classes = Survey.Serializer.getChildrenClasses("question", true);
+  var res = [];
+  for (var i = 0; i < classes.length; i++) {
+    if (classes[i].name !== className) {
+      res.push(classes[i].name);
+    }
+  }
+  return res;
 }
 
 function createDefaultQuestionConverterItems() {

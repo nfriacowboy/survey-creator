@@ -1,41 +1,17 @@
-import {
-  SurveyModel,
-  Base,
-  Serializer,
-  HtmlConditionItem,
-  Event,
-  ExpressionRunner,
-  Question,
-  HashTable,
-  Helpers,
-  property,
-  propertyArray,
-} from "survey-core";
+import { SurveyModel, Base, Serializer, Event, ExpressionRunner, Question, HashTable, Helpers, property, propertyArray } from "survey-core";
 import { editorLocalization } from "../../editorLocalization";
-import { ConditionEditor } from "../../property-grid/condition-survey";
-import {
-  ISurveyCreatorOptions,
-  EmptySurveyCreatorOptions,
-  settings,
-} from "../../settings";
-import {
-  ISurveyLogicItemOwner,
-  SurveyLogicItem,
-  SurveyLogicAction,
-} from "./logic-items";
-import {
-  SurveyLogicTypes,
-  SurveyLogicType,
-  getLogicString,
-} from "./logic-types";
+import { ISurveyCreatorOptions, EmptySurveyCreatorOptions, settings } from "../../settings";
+import { ISurveyLogicItemOwner, SurveyLogicItem, SurveyLogicAction } from "./logic-items";
+import { SurveyLogicTypes, SurveyLogicType } from "./logic-types";
+import "./logic.scss";
 
 export class SurveyLogic extends Base implements ISurveyLogicItemOwner {
   private editableItemValue: SurveyLogicItem;
   public static get visibleActions(): Array<string> {
-    return settings.visibleLogicActions;
+    return settings.logic.visibleActions;
   }
   public static set visibleActions(val: Array<string>) {
-    settings.visibleLogicActions = val;
+    settings.logic.visibleActions = val;
   }
   public static get types() {
     return SurveyLogicTypes.types;
@@ -89,11 +65,9 @@ export class SurveyLogic extends Base implements ISurveyLogicItemOwner {
   ) {
     super();
     if (!this.options) this.options = new EmptySurveyCreatorOptions();
-    //TODO
-    //this.hideExpressionHeader = options && options["hideExpressionHeader"];
     this.readOnly = this.optionsReadOnly;
     this.update();
-    this.koAfterRender = function () {};
+    this.koAfterRender = function () { };
   }
   dispose() {
     super.dispose();
@@ -102,10 +76,6 @@ export class SurveyLogic extends Base implements ISurveyLogicItemOwner {
   }
   @propertyArray() items: Array<SurveyLogicItem>;
   @propertyArray() logicTypes: Array<SurveyLogicType>;
-  /**
-   * There are 3 modes: view, new, edit
-   */
-  @property() mode: string;
   @property() errorText: string;
   @property() readOnly: boolean;
   @property() placeholderHtml: string;
@@ -113,14 +83,18 @@ export class SurveyLogic extends Base implements ISurveyLogicItemOwner {
   public get editableItem(): SurveyLogicItem {
     return this.editableItemValue;
   }
-
-  protected onPropertyValueChanged(name: string, oldValue: any, newValue: any) {
-    super.onPropertyValueChanged(name, oldValue, newValue);
-    if (name === "mode") {
-      this.errorText = "";
-      if (newValue == "view" && (oldValue == "edit" || oldValue == "new")) {
-        this.onEndEditing();
-      }
+  private modeValue: string;
+  /**
+   * There are 3 modes: view, new, edit
+   */
+  public get mode(): string { return this.modeValue; }
+  public set mode(val: string) {
+    if (this.modeValue === val) return;
+    const oldValue = this.mode;
+    this.modeValue = val;
+    this.errorText = "";
+    if (val == "view" && (oldValue == "edit" || oldValue == "new")) {
+      this.onEndEditing();
     }
   }
   public getLocString(name: string) {
@@ -159,10 +133,12 @@ export class SurveyLogic extends Base implements ISurveyLogicItemOwner {
     if (!this.editableItem || this.hasError()) return false;
     !!this.options && this.options.startUndoRedoTransaction();
     this.onEditableItemApply();
-    var isNew = this.items.indexOf(this.editableItem) < 0;
-    if (isNew) {
+    const hasInList = this.items.indexOf(this.editableItem) < 0;
+    if (hasInList) {
       this.items.push(this.editableItem);
     }
+    const isNew = !hasInList || this.editableItem.isNew;
+    this.editableItem.isNew = false;
     this.onItemChanged(this.editableItem, isNew ? "new" : "modify");
     !!this.options && this.options.stopUndoRedoTransaction();
     this.onLogicItemSaved.fire(this, { item: this.editableItem });
@@ -175,7 +151,7 @@ export class SurveyLogic extends Base implements ISurveyLogicItemOwner {
     }
     return res;
   }
-  protected onEditableItemApply() {}
+  protected onEditableItemApply() { }
   protected onItemChanged(item: SurveyLogicItem, changeType: string) {
     if (!!this.onChangedCallback) {
       this.onChangedCallback(item, changeType);
@@ -201,7 +177,44 @@ export class SurveyLogic extends Base implements ISurveyLogicItemOwner {
     };
     this.onLogicItemValidation.fire(this, options);
     this.errorText = options.error;
+    if (!!this.errorText && !!this.survey.creator)
+      this.survey.creator.notify(this.errorText, "error");
     return !!this.errorText;
+  }
+  public getUsedQuestions(): Question[] {
+    const names: { [key: string]: Question } = {};
+    this.items.forEach(item => {
+      item.getQuestionNames().forEach(name => {
+        if (!names[name]) {
+          names[name] = this.survey.getQuestionByName(name);
+        }
+      });
+    });
+    const res: Question[] = [];
+    Object.keys(names).forEach(item => {
+      if (!!names[item]) {
+        res.push(names[item]);
+      }
+    });
+    return res;
+  }
+  public getUsedActionTypes(): SurveyLogicType[] {
+    const types: { [key: string]: SurveyLogicType } = {};
+    this.items.forEach(item => {
+      item.getActionTypes().forEach(name => {
+        if (!types[name]) {
+          types[name] = this.logicTypes.filter(logicType => logicType.name == name)[0];
+        }
+      });
+    });
+
+    const res: SurveyLogicType[] = [];
+    Object.keys(types).forEach(item => {
+      if (!!types[item]) {
+        res.push(types[item]);
+      }
+    });
+    return res;
   }
   protected hasErrorInUI(): boolean {
     return false;
@@ -229,27 +242,32 @@ export class SurveyLogic extends Base implements ISurveyLogicItemOwner {
   public addNew() {
     !!this.options && this.options.startUndoRedoTransaction();
     var logicItem = new SurveyLogicItem(this);
-    this.editableItemValue = logicItem;
-    this.onStartEditing();
-    this.mode = "new";
+    logicItem.isNew = true;
+    this.items.push(logicItem);
+    this.editItemCore(logicItem);
     !!this.options && this.options.stopUndoRedoTransaction();
   }
   public editItem(item: SurveyLogicItem) {
     !!this.options && this.options.startUndoRedoTransaction();
-    this.editableItemValue = item;
-    this.onStartEditing();
-    this.mode = "edit";
+    this.editItemCore(item);
     !!this.options && this.options.stopUndoRedoTransaction();
   }
-  protected onStartEditing() {}
+  private editItemCore(item: SurveyLogicItem) {
+    this.editableItemValue = item;
+    this.onStartEditing();
+    this.mode = item.isNew ? "new" : "edit";
+  }
+  protected onStartEditing() { }
   protected onEndEditing() {
     this.editableItemValue = null;
   }
-  public removeItem(item: SurveyLogicItem) {
-    var eventOptions = { item: item, allowRemove: true };
+  protected canRemoveItem(item: SurveyLogicItem): boolean {
+    const eventOptions = { item: item, allowRemove: true };
     this.onLogicItemRemoving.fire(this, eventOptions);
-    if (!eventOptions.allowRemove) return;
-
+    return eventOptions.allowRemove;
+  }
+  public removeItem(item: SurveyLogicItem, checkCanRemove: boolean = true): void {
+    if (checkCanRemove && !this.canRemoveItem(item)) return;
     !!this.options && this.options.startUndoRedoTransaction();
     item.apply("");
     var index = this.items.indexOf(item);
@@ -422,16 +440,4 @@ export class SurveyLogic extends Base implements ISurveyLogicItemOwner {
     }
     return res;
   }
-  /*
-  public get hideExpressionHeader(): boolean {
-    return (
-      !!this.expressionEditor && this.expressionEditor.koShowExpressionHeader()
-    );
-  }
-  public set hideExpressionHeader(val: boolean) {
-    if (!!this.expressionEditor) {
-      this.expressionEditor.koShowExpressionHeader(val);
-    }
-  }
-  */
 }

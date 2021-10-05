@@ -3,8 +3,6 @@
 .svc-item-value-wrapper {
   position: relative;
   display: flex;
-  //Todo: remove this style
-  width: max-content;
 }
 
 .svc-question__content--selected .svc-item-value-wrapper {
@@ -18,7 +16,7 @@
 .svc-item-value--dragging {
   background: $background;
   box-shadow: 0px calcSize(1) calcSize(2) $shadow-medium;
-  border-radius: 100px;
+  border-radius: calcSize(12.5);
   padding-right: calcSize(3);
   padding-left: calcSize(0.5);
 }
@@ -43,23 +41,17 @@
   cursor: pointer;
   display: inline-block;
 }
-
+.svc-item-value-controls__button > span,
+sv-svg-icon.svc-item-value-controls__button {
+  width: calcSize(2);
+  height: calcSize(2);
+  box-sizing: content-box;
+  .sv-svg-icon {
+    display: block;
+  }
+}
 .svc-item-value-controls__button > span {
   display: block;
-  width: calcSize(2);
-  height: calcSize(2);
-}
-//for knockout
-sv-svg-icon.svc-item-value-controls__button {
-  width: calcSize(2);
-  height: calcSize(2);
-  box-sizing: content-box;
-}
-//for knockout
-sv-svg-icon.svc-item-value-controls__button {
-  width: 16px;
-  height: 16px;
-  box-sizing: content-box;
 }
 
 .svc-item-value-controls__drag {
@@ -125,4 +117,54 @@ sv-svg-icon.svc-item-value-controls__button {
   .sv-ranking-item__icon-container {
     display: none;
   }
+}
+
+.svc-item-value--ghost {
+  .svc-item-value__ghost {
+    display: block;
+  }
+  .svc-item-value-controls {
+    visibility: hidden;
+  }
+}
+
+.svc-item-value--movedown {
+  transform: translate(0, 0);
+  animation: svdragdropmovedown 0.1s;
+  animation-timing-function: ease-in-out;
+}
+
+@keyframes svdragdropmovedown {
+  0% {
+    transform: translate(0, -50px);    
+  } 
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+.svc-item-value--moveup {
+  transform: translate(0, 0);
+  animation: svdragdropmoveup 0.1s;
+  animation-timing-function: ease-in-out;
+}
+
+@keyframes svdragdropmoveup {
+  0% {
+    transform: translate(0, 50px);   
+  }
+  100% {
+    transform: translate(0, 0); 
+  }
+}
+
+.svc-item-value__ghost {
+  display: none;
+  background: $background-dim;
+  border-radius: calcSize(12.5);
+  width: calcSize(25);
+  height: 55px;
+  z-index: 11;
+  position: absolute;
+  left: 35px;
 }

@@ -52,7 +52,7 @@ export class DragDropHelper {
   private onModifiedCallback: (options?: any) => any;
   private scrollableElement: HTMLElement = null;
   private ddTarget: DragDropTargetElement = null;
-  private prevCoordinates: { x: number; y: number };
+  private prevCoordinates: { x: number, y: number };
   static counter: number = 1;
   private id: number = DragDropHelper.counter++;
   constructor(
@@ -127,8 +127,8 @@ export class DragDropHelper {
         if (!!document.caretRangeFromPoint) {
           dropRange = document.caretRangeFromPoint(e.clientX, e.clientY);
         } else {
-          if (!!document.caretPositionFromPoint) {
-            dropRange = document.caretPositionFromPoint(e.clientX, e.clientY);
+          if (!!document["caretPositionFromPoint"]) {
+            dropRange = document["caretPositionFromPoint"](e.clientX, e.clientY);
           }
         }
         if (!!dropRange) {
@@ -291,8 +291,8 @@ export class DragDropHelper {
               ? newElement.parent.elements.indexOf(newElement)
               : -1
           });
-          newElement.updateElementCss && newElement.updateElementCss();
-          newElement["koElementType"] && newElement["koElementType"].notifySubscribers();
+        newElement.updateElementCss && newElement.updateElementCss();
+        newElement["koElementType"] && newElement["koElementType"].notifySubscribers();
       }
     }
     this.end();

@@ -10,10 +10,19 @@
   background: $background-dim;
 }
 
+.svc-full-container {
+  height: 100%;
+  width: 100%;
+}
+
+.svc-flex-row__element--growing {
+  flex: 1;
+  overflow: auto;
+}
+
 .svc-flex-column {
   display: flex;
   flex-direction: column;
-  width: 100%;
 }
 
 .svc-top-bar {
@@ -21,4 +30,13 @@
   background: $background;
   box-sizing: border-box;
   box-shadow: inset 0px -1px 0px $border;
+
+  .svc-toolbar-wrapper {
+    flex: 0 0 auto;
+    display: flex;
+    
+    .sv-action-bar{
+      justify-content: flex-end;
+    }
+  }
 }

@@ -32,7 +32,7 @@ import {
   defaultStrings,
   editorLocalization
 } from "../../src/editorLocalization";
-import { SurveyQuestionEditorDefinition } from "../../src/questionEditors/questionEditorDefinition";
+import { SurveyQuestionEditorDefinition } from "../../src/question-editor/definition";
 
 export * from "../../src/property-grid/matrices";
 export * from "../../src/property-grid/restfull";
@@ -981,7 +981,7 @@ QUnit.test(
       );
       assert.ok(colDetailEditor.getPropertyEditorByName("choices"));
       columnsEditor.onReturnToListClick();
-  
+
       itemViewModel.obj.cellType = "default";
       columnsEditor.onEditItemClick(itemViewModel);
       colDetailEditor = <SurveyElementEditorContentModel>(
@@ -1013,6 +1013,10 @@ test("SurveyNestedPropertyEditorItem koCanDeleteItem", () => {
     columnsQuestion.canRemoveRow(columnsQuestion.visibleRows[0])
   ).toBeTruthy();
   allowDeleteItem = false;
+  propertyGrid = new PropertyGridModelTester(question, options);
+  columnsQuestion = <QuestionMatrixDynamicModel>(
+    propertyGrid.survey.getQuestionByName("columns")
+  );
   expect(
     columnsQuestion.canRemoveRow(columnsQuestion.visibleRows[0])
   ).toBeFalsy();
@@ -1097,6 +1101,10 @@ test("SurveyPropertyPagesEditor koCanDeleteItem + options.", () => {
   expect(pagesQuestion.canRemoveRow(pagesQuestion.visibleRows[1])).toBeTruthy();
   expect(pagesQuestion.canRemoveRow(pagesQuestion.visibleRows[0])).toBeFalsy();
   allowDeleteAll = true;
+  propertyGrid = new PropertyGridModelTester(survey, options);
+  pagesQuestion = <QuestionMatrixDynamicModel>(
+    propertyGrid.survey.getQuestionByName("pages")
+  );
   expect(pagesQuestion.canRemoveRow(pagesQuestion.visibleRows[0])).toBeTruthy();
 });
 
@@ -1244,10 +1252,10 @@ test("Triggers property editor", () => {
       "Run if: {Question1 title} != val1",
       "display text shows correctly"
     );
-  
+
     propEditor.onAddClick({ value: "skiptrigger" });
     assert.equal(survey.triggers.length, 2, "There are two triggers now");
-  
+
     var trigerEditor = <SurveyElementEditorContentModel>(
       propEditor.selectedObjectEditor()
     );
@@ -1265,7 +1273,7 @@ test("Triggers property editor", () => {
       (<Survey.SurveyTriggerSkip>survey.triggers[1]).gotoName,
       "question3"
     );
-  
+
     propEditor.onAddClick({ value: "copyvaluetrigger" });
     assert.equal(survey.triggers.length, 3, "There are three triggers now");
     propEditor.onDeleteClick();
@@ -1509,18 +1517,16 @@ test("onPropertyValueChanging callback, set empty string, Bug#1158", () => {
   expect(titleQuestion.errors).toHaveLength(1);
   expect(question.name).toEqual("q1");
 });
-/* TODO fix
+
 test("SurveyPropertyItemValuesEditor + item.koShowDetails", () => {
   var survey = new SurveyModel();
   var p = survey.addNewPage();
   var question = <QuestionDropdownModel>p.addNewQuestion("dropdown", "q1");
   question.choices = [1, 2, 3];
-  survey.locale = "en";
-  question.choices[0].text = "English 1";
   var tabs =
     SurveyQuestionEditorDefinition.definition["itemvalue[]@choices"].tabs;
   SurveyQuestionEditorDefinition.definition["itemvalue[]@choices"].tabs = [
-    { name: "general", visible: false },
+    { name: "general", visible: false }
   ];
 
   var propertyGrid = new PropertyGridModelTester(question);
@@ -1532,7 +1538,7 @@ test("SurveyPropertyItemValuesEditor + item.koShowDetails", () => {
   ).toBeFalsy();
   SurveyQuestionEditorDefinition.definition["itemvalue[]@choices"].tabs = tabs;
 });
-*/
+
 test("SurveyPropertyItemValuesEditor + item.koShowDetails + make properties invisible", () => {
   var survey = new SurveyModel();
   var p = survey.addNewPage();
@@ -1556,11 +1562,7 @@ test("SurveyPropertyItemValuesEditor + item.koShowDetails + make properties invi
     propertyGrid.survey.getQuestionByName("choices")
   );
   rows = choicesQuestion.visibleRows;
-  rows[0].showDetailPanel();
-  panel = rows[0].detailPanel;
-  expect(panel.getQuestionByName("value").isVisible).toBeTruthy();
-  expect(panel.getQuestionByName("visibleIf")).toBeFalsy();
-  expect(panel.getQuestionByName("enableIf")).toBeFalsy();
+  expect(choicesQuestion.hasDetailPanel(rows[0])).toBeFalsy();
   Serializer.findProperty("itemvalue", "visibleIf").visible = true;
   Serializer.findProperty("itemvalue", "enableIf").visible = true;
 });
@@ -2030,7 +2032,7 @@ QUnit.test("SurveyPropertyMultipleValuesEditor - categories ",
         },
       });
       var property = Survey.Serializer.findProperty("question", "multiple");
-  
+
       var propertyEditor = new SurveyPropertyMultipleValuesEditor(property);
       var categories = propertyEditor.koCategories();
       assert.equal(categories.length, 3, "There are 3 categories");
@@ -2055,7 +2057,7 @@ QUnit.test("SurveyPropertyMultipleValuesEditor - categories ",
         "category 2",
         "The third category is 2"
       );
-  
+
       Survey.Serializer.removeProperty("question", "multiple");
     }
   );

@@ -1,7 +1,8 @@
 import React from "react";
 import { QuestionSelectBase, Base, ItemValue, SurveyModel } from "survey-core";
-import { MatrixCellWrapperViewModel } from "@survey/creator";
+import { MatrixCellWrapperViewModel, toggleHovered } from "@survey/creator";
 import {
+  attachKey2click,
   ReactElementFactory,
   SurveyElementBase,
   SvgIcon
@@ -37,16 +38,22 @@ export class MatrixCellAdornerComponent extends SurveyElementBase<
     let controls = null;
     if(!!this.model.question) {
       controls = <div className="svc-matrix-cell__question-controls">
-        <span className="svc-matrix-cell__question-controls-button" onClick={() => this.model.editQuestion(this.model)}>
-          <SvgIcon size={24} iconName={'icon-pencil'}></SvgIcon>
-        </span>
+        {attachKey2click(<span className="svc-matrix-cell__question-controls-button" onClick={() => this.model.editQuestion(this.model)}>
+          <SvgIcon size={24} iconName={"icon-pencil"}></SvgIcon>
+        </span>)}
       </div>;
     }
 
     return (
       <div
-        className={"svc-matrix-cell"} key={this.props.element.key} onClick={(e: any) => !this.props.question && this.model.selectContext(this.model, e)}
+        className={"svc-matrix-cell"}
+        key={this.props.element.key}
+        onClick={(e: any) => !this.props.question && this.model.selectContext(this.model, e)}
+        onMouseOut={e => this.model.hover(e.nativeEvent, e.currentTarget)}
+        onMouseOver={e => this.model.hover(e.nativeEvent, e.currentTarget)}
       >
+        <div className={"svc-matrix-cell--selected" + (this.model.isSelected ? " svc-visible" : "")}></div>
+
         {this.props.element}
 
         {controls}

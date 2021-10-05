@@ -6,6 +6,7 @@ import { ISurveyCreatorOptions } from "../settings";
 import {
   getFirstNonTextElement,
   getNodesFromKoComponentInfo,
+  trimValue,
 } from "../utils/utils";
 
 export interface ISurveyObjectEditorOptions extends ISurveyCreatorOptions {
@@ -74,8 +75,8 @@ export class SurveyPropertyEditorBase implements Survey.ILocalizableOwner {
   public onChanged: (newValue: any) => any;
   public onGetLocale: () => string;
   public onValueUpdated: (newValue: any) => any;
-  public setup() {}
-  public beforeShow() {}
+  public setup() { }
+  public beforeShow() { }
   constructor(property: Survey.JsonObjectProperty) {
     this.property_ = property;
     var self = this;
@@ -291,7 +292,7 @@ export class SurveyPropertyEditorBase implements Survey.ILocalizableOwner {
   protected checkForErrors(): boolean {
     var errorText = "";
     if (this.isRequired || this.checkForItemValue()) {
-      var er = this.isCurrentValueEmpty;
+      var er = this.isValueEmpty(trimValue(this.koValue()));
       if (er) {
         errorText = this.getLocString("pe.propertyIsEmpty");
       }
@@ -364,7 +365,7 @@ export class SurveyPropertyEditorBase implements Survey.ILocalizableOwner {
     this.performApply();
     return true;
   }
-  protected performApply() {}
+  protected performApply() { }
   public get locale(): string {
     if (this.onGetLocale) return this.onGetLocale();
     return "";
@@ -381,6 +382,9 @@ export class SurveyPropertyEditorBase implements Survey.ILocalizableOwner {
   public getRenderer(name: string): string {
     return undefined;
   }
+  public getRendererContext(locStr: Survey.LocalizableString) {
+    return locStr;
+  }
   public get options(): ISurveyObjectEditorOptions {
     return this.optionsValue;
   }
@@ -388,7 +392,7 @@ export class SurveyPropertyEditorBase implements Survey.ILocalizableOwner {
     this.optionsValue = value;
     this.onOptionsChanged();
   }
-  protected onOptionsChanged() {}
+  protected onOptionsChanged() { }
   public setObject(value: any) {
     if (this.options) {
       var editorOptions = this.createEditorOptions();
@@ -403,8 +407,8 @@ export class SurveyPropertyEditorBase implements Survey.ILocalizableOwner {
   protected createEditorOptions(): any {
     return {};
   }
-  protected onSetEditorOptions(editorOptions: any) {}
-  protected onValueChanged() {}
+  protected onSetEditorOptions(editorOptions: any) { }
+  protected onValueChanged() { }
   protected getCorrectedValue(value: any): any {
     if (!this.property) return value;
     if (!this.isValueEmpty(this.property.minValue)) {
@@ -462,7 +466,7 @@ export class SurveyPropertyEditorBase implements Survey.ILocalizableOwner {
     if (
       newValue !== null &&
       newValue !== undefined &&
-      !Survey.Helpers.isTwoValueEquals(newValue, copiedValue)
+      !Survey.Helpers.isTwoValueEquals(newValue, copiedValue, false, true, false)
     ) {
       this.koValue(newValue);
     }

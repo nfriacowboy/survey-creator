@@ -1,6 +1,7 @@
 import { ItemValue, QuestionCommentModel, Serializer } from "survey-core";
 import { PropertyEditorSetupValue } from "./index";
 import { ISurveyCreatorOptions } from "../settings";
+import { editorLocalization } from "../editorLocalization";
 
 export class FastEntryEditor extends PropertyEditorSetupValue {
   public static applyItemValueArray(
@@ -46,10 +47,36 @@ export class FastEntryEditor extends PropertyEditorSetupValue {
       this.editSurvey.getQuestionByName("question")
     );
     this.setComment();
+    this.editSurvey.onValidateQuestion.add((sender, options) => {
+      const maxChoicesCount = this.options.maximumChoicesCount;
+      if (maxChoicesCount > 0) {
+        var choicesCount = this.getChoicesCount();
+        if (maxChoicesCount < choicesCount) {
+          options.error = editorLocalization
+            .getString("pe.fastEntryChoicesCountError")
+            ["format"](choicesCount, maxChoicesCount);
+        }
+        return;
+      }
+      if (!this.isValueUnique) return;
+      let uniqueValue = this.getFirstUniqueValue();
+      if (!!uniqueValue) {
+        options.error = editorLocalization
+          .getString("pe.fastEntryNonUniqueError")
+          ["format"](uniqueValue);
+      }
+    });
   }
   protected getSurveyJSON(): any {
     return {
-      elements: [{ type: "comment", name: "question" }],
+      elements: [
+        {
+          type: "comment",
+          name: "question",
+          titleLocation: "hidden",
+          rows: 12
+        }
+      ]
     };
   }
   protected getSurveyCreationReason(): string {
@@ -60,6 +87,7 @@ export class FastEntryEditor extends PropertyEditorSetupValue {
   }
   public apply(): boolean {
     if (this.comment.isEmpty()) return false;
+    if (this.editSurvey.hasErrors(true)) return false;
     const items = this.convertTextToItemValues(this.comment.value);
     FastEntryEditor.applyItemValueArray(<any>this.choices, items, this.names);
     return true;
@@ -67,6 +95,30 @@ export class FastEntryEditor extends PropertyEditorSetupValue {
   public setComment() {
     var text = this.convertItemValuesToText();
     this.comment.value = text;
+  }
+  private get isValueUnique(): boolean {
+    return Serializer.findProperty("itemvalue", "value").isUnique === true;
+  }
+  private getFirstUniqueValue(): boolean {
+    var texts = this.comment.value.split("\n");
+    const values: any = {};
+    for (let i = 0; i < texts.length; i++) {
+      let str = texts[i];
+      if (!str) continue;
+      let value = str.split(ItemValue.Separator)[0];
+      if (values[value]) return value;
+      values[value] = true;
+    }
+    return undefined;
+  }
+  private getChoicesCount(): number {
+    var texts = this.comment.value.split("\n");
+    var res = 0;
+    for (let i = 0; i < texts.length; i++) {
+      let str = texts[i];
+      if (!!str) res++;
+    }
+    return res;
   }
   private convertTextToItemValues(text: string): ItemValue[] {
     var items = [];

@@ -1,6 +1,5 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import { CSSProperties } from "react";
 
 import {
   Base,
@@ -13,7 +12,9 @@ import {
   SurveyElement,
   ItemValue,
   QuestionSelectBase,
-  QuestionRowModel
+  AdaptiveActionContainer,
+  QuestionRowModel,
+  LocalizableString
 } from "survey-core";
 import {
   SurveyActionBar,
@@ -27,34 +28,17 @@ import {
   ICreatorOptions,
   CreatorBase,
   ITabbedMenuItem,
-  CreatorToolbarItems
+  getElementWrapperComponentName,
+  isStringEditable,
+  getElementWrapperComponentData,
+  getItemValueWrapperComponentName,
+  getItemValueWrapperComponentData
 } from "@survey/creator";
-import TabbedMenuComponent from "./TabbedMenuComponent";
+import { TabbedMenuComponent } from "./components/TabbedMenu";
 import { editableStringRendererName } from "./components/StringEditor";
+import { NotifierComponent } from "./components/Notifier";
 
 StylesManager.applyTheme("modern");
-
-interface ISurveyCreatorToolBarItemsComponentProps {
-  toolbar: CreatorToolbarItems;
-}
-
-export class SurveyCreatorToolBarItemsComponent extends SurveyElementBase<
-  ISurveyCreatorToolBarItemsComponentProps,
-  any
-> {
-  constructor(props: ISurveyCreatorComponentProps) {
-    super(props);
-  }
-  get toolbar(): CreatorToolbarItems {
-    return this.props.toolbar;
-  }
-  protected getStateElement(): Base {
-    return this.props.toolbar;
-  }
-  protected renderElement(): JSX.Element {
-    return <SurveyActionBar items={this.toolbar.items}></SurveyActionBar>;
-  }
-}
 
 interface ISurveyCreatorComponentProps {
   creator: SurveyCreator;
@@ -66,6 +50,7 @@ export class SurveyCreatorComponent extends SurveyElementBase<
 > {
   constructor(props: ISurveyCreatorComponentProps) {
     super(props);
+    this.rootNode = React.createRef();
   }
   get creator(): CreatorBase<SurveyModel> {
     return this.props.creator;
@@ -73,24 +58,60 @@ export class SurveyCreatorComponent extends SurveyElementBase<
   protected getStateElement(): Base {
     return this.props.creator;
   }
+  componentDidMount() {
+    super.componentDidMount();
+    this.creator.initKeyboardShortcuts(this.rootNode.current);
+  }
+  componentWillUnmount() {
+    super.componentWillUnmount();
+    this.creator.removeKeyboardShortcuts(this.rootNode.current);
+  }
+  private rootNode: React.RefObject<HTMLDivElement>;
 
-  render() {
+  renderElement() {
     const creator: CreatorBase<SurveyModel> = this.props.creator;
+    let licenseBanner = null;
+    if (!this.props.creator.haveCommercialLicense) {
+      licenseBanner = (
+        <div className="svc-creator__banner">
+          <span className="svc-creator__non-commercial-text">
+            <a href="https://surveyjs.io/buy">
+              {this.props.creator.licenseText}
+            </a>
+          </span>
+        </div>
+      );
+    }
     //AM: width unrecognized by react
     return (
-      <div className="svc-creator">
-        <div className="svc-creator__area svc-flex-column">
-          <div className="svc-top-bar">
-            <TabbedMenuComponent items={creator.tabs}></TabbedMenuComponent>
-            <SurveyCreatorToolBarItemsComponent
-              toolbar={creator.toolbarItemsWrapper}
-            ></SurveyCreatorToolBarItemsComponent>
-          </div>
-          <div className="svc-creator__content-wrapper svc-flex-row">
-            <div className="svc-creator__content-holder svc-flex-column">
-              {this.renderActiveTab()}
+      <div className="svc-creator" ref={this.rootNode}>
+        <div className="svc-full-container svc-creator__area svc-flex-column">
+          <div className="svc-flex-row svc-full-container">
+            <div className="svc-flex-column svc-flex-row__element svc-flex-row__element--growing">
+              <div className="svc-top-bar">
+                {(creator.showTabs ?
+                  <div className="svc-tabbed-menu-wrapper">
+                    <TabbedMenuComponent model={creator.tabbedMenu}></TabbedMenuComponent>
+                  </div> : null)}
+                {(creator.showToolbar ?
+                  <div className="svc-toolbar-wrapper">
+                    <SurveyActionBar model={creator.toolbar}></SurveyActionBar>
+                  </div>
+                  : null)}
+              </div>
+              <div className="svc-creator__content-wrapper svc-flex-row">
+                <div className="svc-creator__content-holder svc-flex-column">
+                  {this.renderActiveTab()}
+                </div>
+              </div>
             </div>
+            {this.renderPropertyGrid()}
           </div>
+          {licenseBanner}
+          <NotifierComponent
+            creator={creator}
+            notifier={creator.notifier}
+          ></NotifierComponent>
         </div>
       </div>
     );
@@ -105,26 +126,62 @@ export class SurveyCreatorComponent extends SurveyElementBase<
     return null;
   }
   renderCreatorTab(tab: ITabbedMenuItem) {
+    if (tab.visible === false) {
+      return null;
+    }
     const creator: CreatorBase<SurveyModel> = this.props.creator;
     const component = !!tab.renderTab
       ? tab.renderTab()
       : ReactElementFactory.Instance.createElement(tab.componentContent, {
-          creator: creator,
-          survey: creator.survey,
-          data: tab.data
-        });
+        creator: creator,
+        survey: creator.survey,
+        data: tab.data.model
+      });
     return (
-      <div key={tab.id} className="svc-creator-tab">
+      <div
+        key={tab.id}
+        id={"scrollableDiv-" + tab.id}
+        className="svc-creator-tab"
+      >
         {component}
       </div>
     );
   }
+  renderPropertyGrid() {
+    if (!!this.creator.currentTabPropertyGrid)
+      return (
+        <div>
+          {ReactElementFactory.Instance.createElement("svc-property-grid", { model: this.creator.currentTabPropertyGrid })}
+        </div>);
+    else
+      return null;
+  }
 }
 
-class DesignTimeSurveyModel extends Model {
+export class DesignTimeSurveyModel extends Model {
   constructor(public creator: SurveyCreator, jsonObj?: any) {
     super(jsonObj);
   }
+  public isPopupEditorContent = false;
+
+  public getElementWrapperComponentName(element: any, reason?: string): string {
+    let componentName = getElementWrapperComponentName(
+      element,
+      reason,
+      this.isPopupEditorContent
+    );
+    if (!componentName && element instanceof PanelModel) {
+      return "svc-question";
+    }
+    return (
+      componentName || super.getElementWrapperComponentName(element, reason)
+    );
+  }
+  public getElementWrapperComponentData(element: any, reason?: string): any {
+    const data = getElementWrapperComponentData(element, reason, this.creator);
+    return data || super.getElementWrapperComponentData(element);
+  }
+
   public getRowWrapperComponentName(row: QuestionRowModel): string {
     return "svc-row";
   }
@@ -134,99 +191,41 @@ class DesignTimeSurveyModel extends Model {
       row
     };
   }
-  public getElementWrapperComponentName(element: any, reason?: string): string {
-    if (this.isDesignMode) {
-      if (
-        reason === "cell" ||
-        reason === "column-header" ||
-        reason === "row-header"
-      ) {
-        return "svc-matrix-cell";
-      }
-      if (!element["parentQuestionValue"]) {
-        if (element instanceof Question) {
-          if (element.getType() == "dropdown") {
-            return this.isPopupEditorContent
-              ? "svc-cell-dropdown-question"
-              : "svc-dropdown-question";
-          }
-          if (element.getType() == "image") {
-            return "svc-image-question";
-          }
-          if (element.getType() == "rating") {
-            return "svc-rating-question";
-          }
-          return this.isPopupEditorContent
-            ? "svc-cell-question"
-            : "svc-question";
-        }
-        if (element instanceof PanelModel) {
-          return "svc-question";
-        }
-      }
-    }
-    return super.getElementWrapperComponentName(element);
+
+  public getItemValueWrapperComponentName(item: ItemValue, question: QuestionSelectBase): string {
+    return getItemValueWrapperComponentName(item, question);
   }
-  public getElementWrapperComponentData(element: any, reason?: string): any {
-    if (this.isDesignMode) {
-      if (
-        reason === "cell" ||
-        reason === "column-header" ||
-        reason === "row-header"
-      ) {
-        return {
-          creator: this.creator,
-          element: element,
-          question: element.question,
-          row: element.row,
-          column: element.column
-        };
-      }
-      if (!element["parentQuestionValue"]) {
-        if (element instanceof Question) {
-          return this.creator;
-        }
-        if (element instanceof PanelModel) {
-          return this.creator;
-        }
-      }
-    }
-    return super.getElementWrapperComponentData(element);
+  public getItemValueWrapperComponentData(item: ItemValue, question: QuestionSelectBase): any {
+    return getItemValueWrapperComponentData(item, question, this.creator);
   }
-  public getItemValueWrapperComponentName(
-    item: ItemValue,
-    question: QuestionSelectBase
-  ): string {
-    if (!this.isDesignMode || !!question["parentQuestionValue"]) {
-      return SurveyModel.TemplateRendererComponentName;
-    }
-    if (question.getType() === "imagepicker") {
-      return "svc-image-item-value";
-    }
-    return "svc-item-value";
-  }
-  public getItemValueWrapperComponentData(
-    item: ItemValue,
-    question: QuestionSelectBase
-  ): any {
-    if (!this.isDesignMode || !!question["parentQuestionValue"]) {
-      return item;
-    }
-    return {
-      creator: this.creator,
-      question
-    };
-  }
+
   public getRendererForString(element: Base, name: string): string {
-    if (this.isDesignMode && !element["parentQuestionValue"]) {
+    if (!this.creator.readOnly && isStringEditable(element, name)) {
       return editableStringRendererName;
     }
     return undefined;
+  }
+
+  public getRendererContextForString(element: Base, locStr: LocalizableString) {
+    const lStr: any = locStr;
+    if (!this.creator.readOnly && isStringEditable(element, locStr.name)) {
+      return {
+        creator: this.creator,
+        element,
+        locStr
+      };
+    }
+    return lStr;
   }
 }
 export class SurveyCreator extends CreatorBase<SurveyModel> {
   constructor(options: ICreatorOptions = {}, options2?: ICreatorOptions) {
     super(options, options2);
+  }
+  protected createSurveyCore(json: any = {}, reason: string): Model {
+    if (reason === "designer" || reason === "modal-question-editor")
+      return new DesignTimeSurveyModel(this, json);
+    return new Model(json);
   }
   public render(target: string | HTMLElement) {
     let node: HTMLElement = target as HTMLElement;
@@ -242,9 +241,6 @@ export class SurveyCreator extends CreatorBase<SurveyModel> {
     );
   }
 
-  protected createSurveyCore(json: any = {}): SurveyModel {
-    return new DesignTimeSurveyModel(this, json);
-  }
   //ISurveyCreator
   public createQuestionElement(question: Question): JSX.Element {
     return ReactQuestionFactory.Instance.createQuestion(

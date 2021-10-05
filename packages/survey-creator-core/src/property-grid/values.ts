@@ -4,7 +4,10 @@ import {
   JsonObjectProperty,
   Question,
   QuestionMatrixModel,
-  ComponentCollection
+  Serializer,
+  QuestionFactory,
+  property,
+  SurveyModel
 } from "survey-core";
 import {
   PropertyGridEditorCollection,
@@ -20,17 +23,60 @@ import {
 } from "./values-survey";
 import { ISurveyCreatorOptions } from "../settings";
 import { editorLocalization } from "../editorLocalization";
+import { SurveyHelper } from "../survey-helper";
 
-var propertyGridValueJSON = {
-  name: "propertygrid_value",
-  showInToolbox: false,
-  questionJSON: {
-    type: "html",
-    html: editorLocalization.getString("pe.emptyValue")
+export class QuestionLinkValueModel extends Question {
+  public linkClickCallback: () => void;
+  @property() linkValueText: string;
+  constructor(name: string) {
+    super(name);
+    this.linkValueText = editorLocalization.getString("pe.emptyValue");
   }
-};
+  protected onPropertyValueChanged(name: string, oldValue: any, newValue: any) {
+    super.onPropertyValueChanged(name, oldValue, newValue);
+    if (name === "value") {
+      this.updateLinkValueText();
+    }
+  }
+  public getType(): string {
+    return "linkvalue";
+  }
+  public doLinkClick() {
+    if (!!this.linkClickCallback) {
+      this.linkClickCallback();
+    }
+  }
+  private updateLinkValueText() {
+    var displayValue = this.isEmpty()
+      ? editorLocalization.getString("pe.emptyValue")
+      : this.getObjDisplayValue();
+    this.linkValueText = displayValue;
+  }
+  private stringifyValue(val: any): string {
+    if (typeof val !== "string") return JSON.stringify(val);
+    return val;
+  }
+  private getObjDisplayValue(): string {
+    const obj = this.obj;
+    if (!obj || !obj["getDisplayValue"]) return this.stringifyValue(this.value);
+    var res = obj["getDisplayValue"](true, this.value);
+    if (typeof res !== "string") return JSON.stringify(res);
+    return res;
+  }
+}
 
-ComponentCollection.Instance.add(propertyGridValueJSON);
+Serializer.addClass(
+  "linkvalue",
+  [],
+  function () {
+    return new QuestionLinkValueModel("");
+  },
+  "nonvalue"
+);
+
+QuestionFactory.Instance.registerQuestion("linkvalue", (name) => {
+  return new QuestionLinkValueModel(name);
+});
 
 export abstract class PropertyGridValueEditorBase extends PropertyGridEditor {
   public getJSON(
@@ -39,10 +85,22 @@ export abstract class PropertyGridValueEditorBase extends PropertyGridEditor {
     options: ISurveyCreatorOptions
   ): any {
     return {
-      type: "propertygrid_value",
-      readOnly: true
+      type: "linkvalue"
     };
   }
+  public onGetQuestionTitleActions(obj: Base, options: any): void {
+    var action = undefined;
+    for (var i = 0; i < options.titleActions.length; i++) {
+      if (options.titleActions[i].id === "property-grid-setup") {
+        action = options.titleActions[i];
+        break;
+      }
+    }
+    options.question.linkClickCallback = () => {
+      action.action();
+    };
+  }
+
   public clearPropertyValue(
     obj: Base,
     prop: JsonObjectProperty,
@@ -51,43 +109,8 @@ export abstract class PropertyGridValueEditorBase extends PropertyGridEditor {
   ): void {
     obj[prop.name] = undefined;
   }
-  onValueChanged(obj: Base, prop: JsonObjectProperty, question: Question) {
-    var displayValue = question.isEmpty()
-      ? editorLocalization.getString("pe.emptyValue")
-      : this.getObjDisplayValue(obj, question);
-    question.contentQuestion.html = this.correctHtml(displayValue);
-  }
   protected isValueEmpty(val: any): boolean {
     return Helpers.isValueEmpty(val);
-  }
-  private correctHtml(html: string): string {
-    if (!html) return html;
-    let regex = /[&|<|>|"|']/g;
-    return html.replace(regex, function (match) {
-      if (match === "&") {
-        return "&amp;";
-      } else if (match === "<") {
-        return "&lt;";
-      } else if (match === ">") {
-        return "&gt;";
-      } else if (match === '"') {
-        return "&quot;";
-      } else {
-        return "&apos;";
-      }
-    });
-  }
-  private getObjDisplayValue(obj: Base, question: Question): string {
-    if (!obj["getDisplayValue"]) return this.stringifyValue(question.value);
-    var res = !!obj["getDisplayValue"]
-      ? obj["getDisplayValue"](true, question.value)
-      : question.value;
-    if (typeof res !== "string") return JSON.stringify(res);
-    return res;
-  }
-  private stringifyValue(val: any): string {
-    if (typeof val !== "string") return JSON.stringify(val);
-    return val;
   }
 }
 
@@ -172,10 +195,39 @@ export class PropertyGridTriggerValueEditor extends PropertyGridValueEditorBase 
     question: Question,
     options: ISurveyCreatorOptions
   ): IPropertyEditorSetup {
-    if (!obj["setToName"] || !obj["owner"]) return;
-    var setQuestion = obj["owner"].getQuestionByValueName(obj["setToName"]);
-    if (!setQuestion) return;
-    return new TriggerValueEditor(setQuestion, obj, prop.name, options);
+    const trigger = question.obj;
+    const setQuestion = this.getSetToNameQuestion(trigger);
+    return new TriggerValueEditor(setQuestion, trigger, prop.name, options);
+  }
+  protected getSetToNameQuestion(obj: Base): Question {
+    let survey = <SurveyModel>obj.getSurvey();
+    if(!survey) {
+      survey = obj["owner"];
+    }
+    if (!obj["setToName"] || !survey) return null;
+    return <Question>survey.getQuestionByValueName(
+      obj["setToName"]
+    );
+  }
+}
+export class PropertyGridTriggerValueInLogicEditor extends PropertyGridTriggerValueEditor {
+  public fit(prop: JsonObjectProperty, context?: string): boolean {
+    return context === "logic" && prop.type == "triggervalue";
+  }
+  public getJSON(
+    obj: Base,
+    prop: JsonObjectProperty,
+    options: ISurveyCreatorOptions
+  ): any {
+    const setQuestion = this.getSetToNameQuestion(obj);
+    if(!setQuestion)
+      return {
+        type: "linkvalue"
+      };
+    const json: any = setQuestion.toJSON();
+    json.type = setQuestion.getType();
+    SurveyHelper.updateQuestionJson(json);
+    return json;
   }
 }
 
@@ -184,3 +236,4 @@ PropertyGridEditorCollection.register(new PropertyGridValueEditor());
 PropertyGridEditorCollection.register(new PropertyGridRowValueEditor());
 PropertyGridEditorCollection.register(new PropertyGridPanelValueEditor());
 PropertyGridEditorCollection.register(new PropertyGridTriggerValueEditor());
+PropertyGridEditorCollection.register(new PropertyGridTriggerValueInLogicEditor());

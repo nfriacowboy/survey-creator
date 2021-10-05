@@ -1,21 +1,14 @@
 import {
   PanelModel,
-  SurveyModel,
   QuestionHtmlModel,
   ElementFactory,
   QuestionTextModel,
   Serializer,
   QuestionRadiogroupModel,
-  QuestionMatrixDropdownModel,
   QuestionMatrixDynamicModel
 } from "survey-core";
 import { getNextValue } from "../src/utils/utils";
-import { CreatorBase, ICreatorOptions } from "../src/creator-base";
 import { editorLocalization } from "../src/editorLocalization";
-import {
-  ISurveyCreatorOptions,
-  EmptySurveyCreatorOptions
-} from "../src/settings";
 import { ConditionEditor } from "../src/property-grid/condition-survey";
 import { CreatorTester } from "./creator-tester";
 
@@ -82,6 +75,9 @@ test("getNextValue", () => {
     ])
   ).toEqual("12345671234567893");
   expect(getNextValue(prefix, ["1 day", "2 days", "3 days"])).toEqual("4 days");
+  expect(getNextValue(prefix, ["a01"])).toEqual("a02");
+  expect(getNextValue(prefix, ["a01", "a02"])).toEqual("a03");
+  expect(getNextValue(prefix, ["aaa1bbb2ccc3"])).toEqual("aaa1bbb2ccc4");
 });
 
 test("Set Text property", () => {
@@ -159,7 +155,16 @@ test("At least one page should be available", () => {
 test("options.questionTypes", () => {
   var allTypes = ElementFactory.Instance.getAllTypes();
   var creator = new CreatorTester();
-  expect(creator.toolbox.items).toHaveLength(allTypes.length);
+  var unregistredCount = allTypes.indexOf("buttongroup") > -1 ? 1 : 0;
+  if (allTypes.indexOf("linkvalue") > -1) {
+    unregistredCount++;
+  }
+  if (allTypes.indexOf("embeddedsurvey") > -1) {
+    unregistredCount++;
+  }
+  expect(creator.toolbox.items).toHaveLength(
+    allTypes.length - unregistredCount
+  );
   creator = new CreatorTester({
     questionTypes: ["text", "dropdown", "unknown"]
   });
@@ -187,12 +192,15 @@ test("Editor state property", () => {
   success = false;
   creator.doSaveFunc();
   expect(creator.state).toEqual("modified");
-  //   creator.addPage();
-  //   expect(creator.state, "modified");
-  //   creator.doUndoClick();
-  //   expect(creator.state, "saved");
-  //   creator.doRedoClick();
-  //   expect(creator.state, "modified");
+  //Add a case for Bug #1447
+  creator.showErrorOnFailedSave = true;
+  var notifyMessage;
+  creator.onNotify.add((sender: any, options: any) => {
+    notifyMessage = options.message;
+  });
+  creator.doSaveFunc();
+  expect(notifyMessage).toBeTruthy();
+  expect(creator.state).toEqual("modified");
 });
 
 test("Do not reload surey on 'Designer' tab click", () => {
@@ -358,7 +366,7 @@ test("fast copy tests, set the correct parent", () => {
   var q1 = p1.addNewQuestion("text", "question1");
   var p2 = p1.addNewPanel("panel2");
   var q2 = p2.addNewQuestion("text", "question2");
-  creator.survey.selectedElement = q2;
+  creator.selectElement(q2);
   creator.fastCopyQuestion(q2);
   expect(p2.questions).toHaveLength(2);
   var newQuestion = <QuestionTextModel>p2.questions[1];
@@ -388,9 +396,9 @@ test("Element name should be unique - property grid + Question Editor", () => {
   creator.survey.currentPage.addNewQuestion("text", "question2");
   var question = creator.survey.currentPage.addNewQuestion("text", "question");
   creator.selectElement(question);
-  expect(creator.propertyGrid.obj).toBeTruthy();
-  expect(creator.propertyGrid.obj).toEqual(question);
-  var questionName = creator.propertyGrid.survey.getQuestionByName("name");
+  expect(creator.designerPropertyGrid.obj).toBeTruthy();
+  expect(creator.designerPropertyGrid.obj).toEqual(question);
+  var questionName = creator.designerPropertyGrid.survey.getQuestionByName("name");
   expect(questionName).toBeTruthy();
   expect(questionName.value).toEqual("question");
   questionName.value = "question2";
@@ -413,7 +421,7 @@ test("Validate Selected Element Errors", () => {
   var question = creator.survey.currentPage.addNewQuestion("text", "question1");
   creator.selectedElement = question;
   expect(creator.validateSelectedElement()).toBeFalsy();
-  var titleQuestion = creator.propertyGrid.survey.getQuestionByName("title");
+  var titleQuestion = creator.designerPropertyGrid.survey.getQuestionByName("title");
   expect(titleQuestion.errors).toHaveLength(1);
   question.title = "My title";
   expect(creator.validateSelectedElement()).toBeTruthy();
@@ -428,7 +436,7 @@ test("Update conditions/expressions on changing question.name", () => {
   var q2 = creator.survey.getAllQuestions()[1];
   q2.visibleIf = "{question1} = 1";
   creator.selectElement(q1);
-  var nameQuestion = creator.propertyGrid.survey.getQuestionByName("name");
+  var nameQuestion = creator.designerPropertyGrid.survey.getQuestionByName("name");
   nameQuestion.value = "myUpdatedQuestion1";
   expect(q2.visibleIf).toEqual("{myUpdatedQuestion1} = 1");
 });
@@ -441,9 +449,8 @@ test("Update conditions/expressions on changing question.valueName", () => {
   var q2 = creator.survey.getAllQuestions()[1];
   q2.visibleIf = "{question1} = 1";
   creator.selectElement(q1);
-  var nameQuestion = creator.propertyGrid.survey.getQuestionByName("name");
-  var valueNameQuestion =
-    creator.propertyGrid.survey.getQuestionByName("valueName");
+  var nameQuestion = creator.designerPropertyGrid.survey.getQuestionByName("name");
+  var valueNameQuestion = creator.designerPropertyGrid.survey.getQuestionByName("valueName");
   valueNameQuestion.value = "valueName1";
   expect(q2.visibleIf).toEqual("{valueName1} = 1");
   valueNameQuestion.value = "valueName2";
@@ -513,7 +520,7 @@ test("Change elemenent page", () => {
   creator.selectedElement = question;
   expect(creator.selectedElement["name"]).toEqual("question1");
   expect(creator.survey.currentPage.name).toEqual("page1");
-  var pageEditor = creator.propertyGrid.survey.getQuestionByName("page");
+  var pageEditor = creator.designerPropertyGrid.survey.getQuestionByName("page");
   expect(pageEditor).toBeTruthy();
   pageEditor.value = "page2";
   expect(creator.selectedElement["name"]).toEqual("question1");
@@ -553,7 +560,7 @@ test("The onModified event is called on property changed", () => {
     survey.pages[0].addNewQuestion("radiogroup", "q1")
   );
   creator.selectElement(question);
-  var titleQuestion = creator.propertyGrid.survey.getQuestionByName("title");
+  var titleQuestion = creator.designerPropertyGrid.survey.getQuestionByName("title");
   counter = 0;
   titleQuestion.value = "some title";
   expect(counter).toEqual(1);
@@ -565,7 +572,7 @@ test("The onModified event is called on property changed", () => {
   expect(counter).toEqual(3);
 
   var choicesQuestion = <QuestionMatrixDynamicModel>(
-    creator.propertyGrid.survey.getQuestionByName("choices")
+    creator.designerPropertyGrid.survey.getQuestionByName("choices")
   );
   counter = 0;
   var rows = choicesQuestion.visibleRows;
@@ -622,10 +629,10 @@ test("creator collapseAllPropertyTabs expandAllPropertyTabs expandPropertyTab co
   var q1 = page.addNewQuestion("text", "q1");
   creator.selectElement(q1);
   var generalPanel = <PanelModel>(
-    creator.propertyGrid.survey.getPanelByName("general")
+    creator.designerPropertyGrid.survey.getPanelByName("general")
   );
   var logicPanel = <PanelModel>(
-    creator.propertyGrid.survey.getPanelByName("logic")
+    creator.designerPropertyGrid.survey.getPanelByName("logic")
   );
   expect(generalPanel.isExpanded).toBeTruthy();
   creator.collapsePropertyTab("general");
@@ -729,6 +736,9 @@ test("creator options.maxLogicItemsInCondition, hide `Add Condition` on exceedin
   };
   var question = creator.survey.getQuestionByName("q1");
   var editor = new ConditionEditor(creator.survey, question, creator);
+  expect(editor.panel.maxPanelCount).toEqual(1);
+
+  editor.panel.addPanel();
   expect(editor.panel.maxPanelCount).toEqual(2);
 });
 
@@ -782,7 +792,7 @@ test("SurveyPropertyConditionEditor, set correct locale into internal survey, Bu
     ]
   };
   expect(creator.survey.locale).toBeFalsy();
-  expect(creator.propertyGrid.survey.locale).toEqual("de");
+  expect(creator.designerPropertyGrid.survey.locale).toEqual("de");
   var question = creator.survey.getQuestionByName("q2");
   var editor = new ConditionEditor(creator.survey, question, creator);
   expect(editor.editSurvey.locale).toEqual("de");
@@ -1054,58 +1064,6 @@ test(
   }
 );
 
-test("pagescreator.readOnly", () => {
-  var creator = new CreatorTester();
-  var pagesEditor = new PagesEditorViewModel(
-    creator.pagesEditorModel,
-    document.createElement("div")
-  );
-  expect(
-    pagescreator.model.readOnly,
-    false,
-    "page editor is not read-only by default"
-  );
-
-  creator.readOnly = true;
-  pagesEditor = new PagesEditorViewModel(
-    creator.pagesEditorModel,
-    document.createElement("div")
-  );
-  expect(
-    pagescreator.model.readOnly,
-    true,
-    "page editor is read-only creator.readOnly"
-  );
-
-  creator.readOnly = false;
-  pagesEditor = new PagesEditorViewModel(
-    creator.pagesEditorModel,
-    document.createElement("div")
-  );
-  expect(
-    pagescreator.model.readOnly,
-    false,
-    "page editor is not read-only again"
-  );
-
-  expect(
-    creator.allowModifyPages,
-    true,
-    "The property is true by default"
-  );
-  var creator = new CreatorTester(null, { allowModifyPages: false });
-  expect(creator.allowModifyPages, false, "The parameter set correctly");
-  pagesEditor = new PagesEditorViewModel(
-    creator.pagesEditorModel,
-    document.createElement("div")
-  );
-  expect(
-    pagescreator.model.readOnly,
-    true,
-    "page editor is read-only allowModifyPages"
-  );
-});
-
 test("PagesEditor change question's page", () => {
   var jsonText = JSON.stringify({
     pages: [
@@ -1143,123 +1101,6 @@ test("PagesEditor change question's page", () => {
   );
   expect(pagescreator.model.selectedPage(), creator.survey.pages[1]);
 });
-
-test("pagescreator.canAddPage", () => {
-  var creator = new CreatorTester();
-  var pagesEditor = new PagesEditorViewModel(
-    creator.pagesEditorModel,
-    document.createElement("div")
-  );
-  expect(
-    pagescreator.model.canAddPage,
-    true,
-    "page adding is allowed by default"
-  );
-
-  var handler = function (s, o) {
-    if (o.obj.getType() === "page") {
-      o.allowAdd = false;
-    }
-  };
-  creator.onElementAllowOperations.add(handler);
-  expect(pagescreator.model.canAddPage, false, "page adding is disabled");
-  creator.onElementAllowOperations.remove(handler);
-  expect(pagescreator.model.canAddPage, false, "page adding is enabled");
-});
-
-test("pagescreator.canCopyPage", () => {
-  var creator = new CreatorTester();
-  var pagesEditor = new PagesEditorViewModel(
-    creator.pagesEditorModel,
-    document.createElement("div")
-  );
-  expect(
-    pagescreator.model.canCopyPage,
-    true,
-    "page copying is allowed by default"
-  );
-
-  var handler = function (s, o) {
-    if (o.obj.getType() === "page") {
-      o.allowCopy = false;
-    }
-  };
-  creator.onElementAllowOperations.add(handler);
-  expect(
-    pagescreator.model.canCopyPage,
-    false,
-    "page copying is disabled"
-  );
-  creator.onElementAllowOperations.remove(handler);
-  expect(pagescreator.model.canCopyPage, false, "page copying is enabled");
-});
-
-test("pagescreator.canEditPage", () => {
-  var creator = new CreatorTester();
-  var pagesEditor = new PagesEditorViewModel(
-    creator.pagesEditorModel,
-    document.createElement("div")
-  );
-  expect(
-    pagescreator.model.canEditPage,
-    true,
-    "page editing is allowed by default"
-  );
-
-  var handler = function (s, o) {
-    if (o.obj.getType() === "page") {
-      o.allowEdit = false;
-    }
-  };
-  creator.onElementAllowOperations.add(handler);
-  expect(
-    pagescreator.model.canEditPage,
-    false,
-    "page editing is disabled"
-  );
-  creator.onElementAllowOperations.remove(handler);
-  expect(pagescreator.model.canEditPage, false, "page editing is enabled");
-});
-
-test("pagescreator.canDeletePage", () => {
-  var creator = new CreatorTester();
-  var pagesEditor = new PagesEditorViewModel(
-    creator.pagesEditorModel,
-    document.createElement("div")
-  );
-  expect(
-    pagescreator.model.canDeletePage,
-    false,
-    "page deleting is disallowed by default"
-  );
-
-  pagescreator.model.addPage();
-
-  expect(
-    pagescreator.model.canDeletePage,
-    true,
-    "page deleting is allowed"
-  );
-
-  var handler = function (s, o) {
-    if (o.obj.getType() === "page") {
-      o.allowDelete = false;
-    }
-  };
-  creator.onElementAllowOperations.add(handler);
-  expect(
-    pagescreator.model.canDeletePage,
-    false,
-    "page deleting is disabled"
-  );
-  creator.onElementAllowOperations.remove(handler);
-  expect(
-    pagescreator.model.canDeletePage,
-    false,
-    "page deleting is enabled"
-  );
-});
-*/
 
 /* TODO refactor
 test("onModified options", function(assert) {

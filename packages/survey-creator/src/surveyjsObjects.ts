@@ -343,20 +343,24 @@ export function createAfterRenderPageHandler(
   survey: SurveyForDesigner
 ) {
   return function elementOnAfterRendering(domElement: any, page: any) {
-    page.renderedElement = domElement;
-    domElement.classList.add("svd_page");
-    domElement.onclick = function (e) {
-      if (!e["markEvent"]) {
-        e["markEvent"] = true;
-        getSurvey(page)["selectedElement"] = page;
-      }
-    };
+    setTimeout(() => {
+      ko.tasks.runEarly();
 
-    domElement.ondblclick = function (e) {
-      getSurvey(page).doElementDoubleClick(page);
-    };
+      page.renderedElement = domElement;
+      domElement.classList.add("svd_page");
+      domElement.onclick = function (e) {
+        if (!e["markEvent"]) {
+          e["markEvent"] = true;
+          getSurvey(page)["selectedElement"] = page;
+        }
+      };
 
-    addAdorner(domElement, page);
+      domElement.ondblclick = function (e) {
+        getSurvey(page).doElementDoubleClick(page);
+      };
+
+      addAdorner(domElement, page);
+    }, 1);
   };
 }
 
@@ -365,8 +369,11 @@ export function createAfterRenderHeaderHandler(
   survey: SurveyForDesigner
 ) {
   return function elementOnAfterRendering(domElement: any, survey: any) {
-    domElement.classList.add("svd_survey_header");
-    addAdorner(domElement, survey);
+    setTimeout(() => {
+      ko.tasks.runEarly();
+      domElement.classList.add("svd_survey_header");
+      addAdorner(domElement, survey);
+    }, 1);
   };
 }
 
@@ -580,6 +587,7 @@ Survey.QuestionSelectBaseImplementor.prototype["onCreated"] = function () {
     "titleLocation",
     "rateValues",
     "choicesFromQuestion",
+    "contentMode",
   ].forEach((propertyName) =>
     this.question.registerFunctionOnPropertyValueChanged(
       propertyName,

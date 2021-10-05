@@ -14,17 +14,21 @@ export * from "../components/page";
 export * from "../components/row";
 export * from "../components/question";
 export * from "../components/question-dropdown";
+export * from "../components/question-link-value";
+export * from "../components/question-embedded-survey";
 export * from "../components/question-image";
 export * from "../components/question-rating";
 export * from "../components/item-value";
 export * from "../components/image-item-value";
 export * from "../components/panel";
 export * from "../components/matrix-cell";
+export * from "../components/question-editor-content";
 export * from "../components/cell-question";
 export * from "../components/cell-question-dropdown";
 
 export * from "../components/page-navigator/page-navigator";
 export * from "../components/page-navigator/page-navigator-item";
+export * from "../components/property-panel/object-selector";
 export * from "../components/property-panel/property-panel";
 export * from "../components/results";
 export * from "../components/simulator";
@@ -34,7 +38,12 @@ export * from "../components/tabbed-menu/tabbed-menu";
 export * from "../components/tabbed-menu/tabbed-menu-item";
 export * from "../components/toolbox/toolbox";
 export * from "../components/toolbox/toolbox-item";
+export * from "../components/toolbox/toolbox-tool";
+export * from "../components/header/logo-image";
+export * from "../components/notifier";
+export * from "../components/tabs/translation-line-skeleton";
 export * from "../utils/survey-widget";
+export * from "../utils/utils";
 
 export * from "../creator";
 export * as core from "@survey/creator";
@@ -42,10 +51,12 @@ export {
   editorLocalization,
   editorLocalization as localization,
   settings,
-  LogicModel,
+  SurveyLogicUI,
+  SurveyLogic,
   SurveyQuestionEditorDefinition,
   ISurveyCreatorOptions,
   IPropertyGridEditor,
+  ToolboxItemViewModel,
   PropertyGridEditorCollection
 } from "@survey/creator";
 //Obsolete

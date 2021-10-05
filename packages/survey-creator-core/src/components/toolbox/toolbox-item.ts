@@ -1,6 +1,7 @@
 import { Base, SurveyModel } from "survey-core";
 import { IQuestionToolboxItem } from "../../toolbox";
 import { CreatorBase } from "../../creator-base";
+import { DragDropSurveyElements } from "survey-core";
 
 export class ToolboxItemViewModel extends Base {
   constructor(
@@ -11,41 +12,55 @@ export class ToolboxItemViewModel extends Base {
   }
 
   // correct handle click vs drag
-  private clickWasDone = false;
   private pointerDownEvent;
-  public onPointerDown(pointerDownEvent) {
-    pointerDownEvent.preventDefault();
-    this.pointerDownEvent = pointerDownEvent;
-    const toolboxItemHTMLElement = <HTMLElement>this.pointerDownEvent.target;
-    toolboxItemHTMLElement.addEventListener("pointerup", this.click);
-    setTimeout(() => {
-      document.addEventListener("pointermove", this.startDragToolboxItem);
-    }, 300);
+  private startX;
+  private startY;
+  private currentX;
+  private currentY;
+
+  public get allowAdd() {
+    return !this.creator.readOnly;
   }
-  private click = (event) => {
+
+  public onPointerDown(pointerDownEvent) {
+    if (!this.allowAdd) return;
+    this.pointerDownEvent = pointerDownEvent;
+    this.startX = pointerDownEvent.pageX;
+    this.startY = pointerDownEvent.pageY;
+    document.addEventListener("pointermove", this.startDragToolboxItem);
+  }
+  public click = (event) => {
+    if (!this.allowAdd) return;
     this.clearListeners();
     this.creator.clickToolboxItem(this.item.json);
-    this.clickWasDone = true;
   };
   private startDragToolboxItem = (pointerMoveEvent) => {
-    pointerMoveEvent.preventDefault();
+    this.currentX = pointerMoveEvent.pageX;
+    this.currentY = pointerMoveEvent.pageY;
+    if (this.isMicroMovement) return;
 
     this.clearListeners();
-    if (this.clickWasDone) {
-      this.clickWasDone = false;
-      return;
-    }
+
     var json = this.creator.getJSONForNewElement(this.item.json);
-    this.creator.dragDropHelper.startDragToolboxItem(
-      this.pointerDownEvent,
-      json
-    );
+    this.dragDropHelper.startDragToolboxItem(this.pointerDownEvent, json);
     return true;
   };
+
+  private get dragDropHelper(): DragDropSurveyElements {
+    return this.creator.dragDropSurveyElements;
+  }
+
+  // see https://stackoverflow.com/questions/6042202/how-to-distinguish-mouse-click-and-drag
+  private get isMicroMovement() {
+    const delta = 10;
+    const diffX = Math.abs(this.currentX - this.startX);
+    const diffY = Math.abs(this.currentY - this.startY);
+    return diffX < delta && diffY < delta;
+  }
   private clearListeners() {
+    if (!this.pointerDownEvent) return;
     const toolboxItemHTMLElement = <HTMLElement>this.pointerDownEvent.target;
     document.removeEventListener("pointermove", this.startDragToolboxItem);
-    toolboxItemHTMLElement.removeEventListener("pointerup", this.click);
   }
   // EO correct handle click vs drag
 }

@@ -232,6 +232,10 @@
     box-shadow: none;
   }
 
+  .select2-container {
+    vertical-align: top;
+  }
+
   .select2-container,
   .select2-container--default.select2-container--open {
     .select2-selection--single {
@@ -747,3 +751,9 @@
 }
 
 @import "./modern.scss";
+
+.svd-toolbox-holder {
+  overflow-y: auto;
+  width: 100%;
+  height: 100%;
+}

@@ -1,62 +1,60 @@
 import React from "react";
-import { PropertyGridViewModel, CreatorBase } from "@survey/creator";
-import { Base, SurveyModel } from "survey-core";
-import {
-  Survey,
-  SurveyElementBase,
-  SurveyActionBar,
-  ReactQuestionFactory,
-  SurveyQuestionButtonGroup,
-} from "survey-react-ui";
+import { PropertyGridViewModelBase, ResizeManager } from "@survey/creator";
+import { Base } from "survey-core";
+import { Survey, SurveyElementBase, SurveyActionBar, ReactQuestionFactory, SurveyQuestionButtonGroup, ReactElementFactory } from "survey-react-ui";
+
 interface IPropertyGridComponentProps {
-  model: CreatorBase<SurveyModel>;
+  model: PropertyGridViewModelBase;
 }
-class PropertyGridComponent extends SurveyElementBase<
-  IPropertyGridComponentProps,
-  any
-> {
-  model: PropertyGridViewModel;
+
+export class PropertyGridComponent extends SurveyElementBase<IPropertyGridComponentProps, any> {
+  private resizeManager: ResizeManager;
+  private containerRef: React.RefObject<HTMLDivElement>;
+
+  get model(): PropertyGridViewModelBase {
+    return this.props.model;
+  }
+
   constructor(props: IPropertyGridComponentProps) {
     super(props);
-    var creator = this.props.model;
-    this.model = new PropertyGridViewModel(
-      creator.propertyGrid,
-      creator.selectionHistoryController
-    );
+    this.containerRef = React.createRef();
   }
+
   protected getStateElement(): Base {
     return this.model;
   }
+
+  componentDidMount() {
+    super.componentDidMount();
+    this.resizeManager = new ResizeManager(this.containerRef.current);
+  }
   componentWillUnmount() {
     super.componentWillUnmount();
-    this.model.dispose();
+    this.resizeManager.dispose();
   }
-  render() {
+  public canRender(): boolean {
+    if (!this.model) return false;
+    return super.canRender();
+  }
+  renderElement() {
+    const style = { display: !this.model.visible ? "none" : "" };
     return (
-      <div className="svc-property-panel">
-        <div className="svc-property-panel__header">
-          <div className="svc-property-panel__actions">
-            <SurveyActionBar items={this.model.toolbarItems}></SurveyActionBar>
+      <div className="svc-flex-column svc-properties-wrapper">
+        <div ref={this.containerRef} style={style} className="svc-property-panel">
+          <div className="svc-property-panel__header">
+            <div className="svc-property-panel__actions">
+              <SurveyActionBar model={this.model.toolbar}></SurveyActionBar>
+            </div>
+            <div className="svc-property-panel__title">
+              {this.model.headerText}
+            </div>
           </div>
-          <span className="svc-property-panel__title">{this.model.title}</span>
-          
-        </div>
-        <div className="svc-property-panel__expander">
-          <Survey model={this.model.survey}></Survey>
+          <div className="svc-property-panel__expander">
+            <Survey model={this.model.survey}></Survey>
+          </div>
         </div>
       </div>
     );
-    /* <svc-property-panel
-        params="title: 'Question Properties',survey: creator.propertyGrid.koSurvey()"
-    ></svc-property-panel> */
-
-    /*
-    <div class="svc-property-panel__header" data-bind="text: title"></div>
-    <div class="svc-property-panel__expander">
-      <!-- ko template: { name: 'survey-content', data: survey  } -->
-      <!-- /ko -->
-    </div>
-     */
   }
 }
 
@@ -65,3 +63,7 @@ ReactQuestionFactory.Instance.registerQuestion("buttongroup", (props) => {
 });
 
 export default PropertyGridComponent;
+
+ReactElementFactory.Instance.registerElement("svc-property-grid", (props) => {
+  return React.createElement(PropertyGridComponent, props);
+});

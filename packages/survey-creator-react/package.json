@@ -1,6 +1,6 @@
 {
   "name": "survey-creator-react",
-  "version": "1.8.50-alpha.0",
+  "version": "1.8.71-beta.0",
   "description": "",
   "homepage": "https://surveyjs.io/Overview/Survey-Creator",
   "author": "Devsoft Baltic OU",
@@ -11,6 +11,7 @@
   },
   "scripts": {
     "start": "webpack-dev-server --env.buildType dev --open",
+    "serve": "http-server --silent",
     "test": "jest",
     "test:update": "npm run test -- -u",
     "test:generate-output": "jest --json --outputFile=.jest-test-results.json || echo",
@@ -19,15 +20,17 @@
     "doc:gen": "node doc_generator/editor_docgenerator.js src/entries/index.ts",
     "doc:update": "chmod +x docupdate_npm.sh && ./docupdate_npm.sh",
     "testcafe": "concurrently \"http-server --silent\" \"testcafe -c 4 chrome ../../testCafe/ --selector-timeout 1500\"",
-    "testcafe:ci": "http-server --silent & testcafe chrome:headless ../../testCafe/ --selector-timeout 1500 --reporter minimal",
-    "testcafe:file": "concurrently \"http-server --silent\" \"testcafe chrome ../../testCafe/designer/string-editor.js --reporter minimal --debug-mode\"",
-    "release": "standard-version --message \"Release: %s [skip ci]\" --prerelease alpha",
+    "testcafe:ci": "http-server --silent & testcafe chrome:headless ../../testCafe/ --selector-timeout 1500 ",
+    "testcafe:file": "concurrently \"http-server --silent\" \"testcafe chrome ../../testCafe/designer/string-editor.ts --reporter minimal --debug-mode\"",
+    "testcafe:a11y": "concurrently \"http-server --silent\" \"testcafe chrome ./testCafe/accessibility.js  --selector-timeout 1500\"",
+    "release": "standard-version --message \"Release: %s [skip ci]\" --prerelease beta",
     "remove-package-lock": "rimraf package-lock.json",
     "build": "webpack --env.buildType dev && webpack --env.buildType prod",
     "watch:dev": "webpack --env.buildType dev --watch",
     "watch:prod": "webpack --env.buildType prod --watch",
     "-prestorybook": "npm run test:generate-output",
-    "storybook": "start-storybook -p 9000"
+    "storybook": "start-storybook -p 9000",
+    "lint": "eslint ./src"
   },
   "devDependencies": {
     "@storybook/addon-a11y": "6.0.21",
@@ -50,15 +53,17 @@
     "@types/react": "17.0.1",
     "@types/react-dom": "17.0.1",
     "ajv": "4.11.2",
+    "axe-core": "^3.5.6",
+    "axe-testcafe": "^3.0.0",
     "chalk": "^3.0.0",
     "concurrently": "^5.3.0",
     "css-loader": "^3.6.0",
     "dotenv": "4.0.0",
+    "eslint": "^7.32.0",
     "dts-bundle": "0.7.2",
     "github-api": "^3.3.0",
     "html-loader": "^0.4.4",
     "http-server": "^0.12.3",
-    "husky": "^4.3.0",
     "jest": "^26.1.0",
     "jest-canvas-mock": "^2.2.0",
     "live-server": "^1.2.1",
@@ -73,7 +78,7 @@
     "storybook-addon-designs": "^5.4.2",
     "style-loader": "^1.2.1",
     "surveyjs-doc-generator": "git+https://github.com/surveyjs/surveyjs-doc-generator.git",
-    "testcafe": "^1.9.2",
+    "testcafe": "^1.14.2",
     "ts-jest": "^26.1.1",
     "ts-loader": "^8.0.15",
     "tsconfig-paths-webpack-plugin": "^3.3.0",
@@ -90,11 +95,6 @@
     "rmodal": "^1.0.36",
     "survey-core": "../../../survey-library/build/survey-core",
     "survey-react-ui": "../../../survey-library/build/survey-react-ui"
-  },
-  "husky": {
-    "hooks": {
-      "pre-push": "npm test"
-    }
   },
   "standard-version": {
     "skip": {

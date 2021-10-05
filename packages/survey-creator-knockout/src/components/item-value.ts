@@ -20,16 +20,9 @@ class KnockoutItemValueWrapperViewModel extends ItemValueWrapperViewModel {
   ) {
     super(creator, question, item);
   }
-
-  get showDragDropGhostOnTop(): boolean {
-    return this.ghostPosition === "top";
-  }
-  get showDragDropGhostOnBottom(): boolean {
-    return this.ghostPosition === "bottom";
-  }
   get attributes() {
     return this.isDraggable
-      ? { "data-svc-drop-target-item-value": this.item.value }
+      ? { "data-sv-drop-target-item-value": this.item.value }
       : null;
   }
 }

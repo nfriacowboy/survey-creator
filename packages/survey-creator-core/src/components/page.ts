@@ -1,96 +1,98 @@
-import {
-  Base,
-  IActionBarItem,
-  PageModel,
-  property,
-  propertyArray,
-  SurveyModel
-} from "survey-core";
+import { PageModel, property, SurveyModel } from "survey-core";
 import { CreatorBase } from "../creator-base";
 import { IPortableMouseEvent } from "../utils/events";
-
+import { ActionContainerViewModel } from "./action-container-view-model";
+import { toggleHovered } from "../utils/utils";
 import "./page.scss";
+import { SurveyHelper } from "../survey-helper";
 
-export class PageViewModel<T extends SurveyModel> extends Base {
-  @property({ defaultValue: false }) isGhost: boolean;
-  @propertyArray() actions: Array<IActionBarItem>;
+export class PageViewModel<
+  T extends SurveyModel
+  > extends ActionContainerViewModel<T> {
   @property({ defaultValue: false }) isSelected: boolean;
   @property({ defaultValue: true }) isPageLive: boolean;
-  public creator: CreatorBase<T>;
   public onPageSelectedCallback: () => void;
+  public questionTypeSelectorModel;
   private _page: PageModel;
-  private selectedPropPageFunc: (sender: Base, options: any) => void;
 
   constructor(creator: CreatorBase<T>, page: PageModel) {
-    super();
-    this.creator = creator;
+    super(creator, page);
+    this.questionTypeSelectorModel = this.creator.getQuestionTypeSelectorModel(
+      () => {
+        this.addGhostPage();
+      }
+    );
 
     this._page = page;
     page["surveyChangedCallback"] = () => {
       this.isPageLive = !!page.survey;
     };
-    this.selectedPropPageFunc = (sender: Base, options: any) => {
-      if (options.name === "isSelectedInDesigner") {
-        this.isSelected = options.newValue;
-        if (options.newValue && this.onPageSelectedCallback) {
-          this.onPageSelectedCallback();
+    if(this.isGhost) {
+      this.updateActionsProperties();
+      this.page.registerFunctionOnPropertiesValueChanged(
+        ["title", "description"],
+        () => {
+          this.addGhostPage();
         }
-      }
-    };
-    this.page.onPropertyChanged.add(this.selectedPropPageFunc);
-
-    if (typeof this.page["_addToSurvey"] === "function") {
-      this.isGhost = true;
-      this.page["_isGhost"] = true;
-      this.page["_addGhostPageViewMobel"] = () => {
-        this.addGhostPage();
-      };
-    } else {
-      this.isGhost = false;
-      this.actions = creator.getContextActions(this.page);
+      );
     }
-
     this.page.onFirstRendering();
     this.page.updateCustomWidgets();
     this.page.setWasShown(true);
+    this.checkActionProperties();
+  }
+  protected onElementSelectedChanged(isSelected: boolean) {
+    super.onElementSelectedChanged(isSelected);
+    this.isSelected = isSelected;
+    if (isSelected && !!this.onPageSelectedCallback) {
+      this.onPageSelectedCallback();
+    }
   }
   public dispose() {
     super.dispose();
-    this.page.onPropertyChanged.remove(this.selectedPropPageFunc);
+    this.page.unRegisterFunctionOnPropertiesValueChanged([
+      "title",
+      "description"
+    ]);
     this.onPropertyValueChangedCallback = undefined;
   }
-
+  public get isGhost(): boolean {
+    return this.creator.survey.pages.indexOf(this.page) < 0;
+  }
+  protected isOperationsAllow(): boolean {
+    return super.isOperationsAllow() && !this.isGhost;
+  }
   get page(): PageModel {
     return this._page;
   }
 
-  private addGhostPage() {
+  public addGhostPage() {
     if (this.isGhost) {
-      this.isGhost = false;
-      this.page["_addToSurvey"]();
+      this.page.unRegisterFunctionOnPropertiesValueChanged([
+        "title",
+        "description"
+      ]);
+      this.page.name = SurveyHelper.getNewPageName(this.creator.survey.pages);
+      this.creator.survey.addPage(this.page);
     }
-    this.creator.survey.currentPage = this.page;
+    this.creator.selectElement(this.page);
+    this.updateActionsProperties();
   }
 
-  addNewQuestionText = "Add a New Question";
   addNewQuestion(model: PageViewModel<T>, event: IPortableMouseEvent) {
-    if (this.creator.undoRedoManager) {
-      this.creator.undoRedoManager.startTransaction("add new page");
-    }
-    this.addGhostPage();
-    model.creator.clickToolboxItem({ type: "text" });
-    if (this.creator.undoRedoManager) {
-      this.creator.undoRedoManager.stopTransaction();
-    }
+    this.creator.addNewQuestionInPage(() => {
+      this.addGhostPage();
+    });
   }
   select(model: PageViewModel<T>, event: IPortableMouseEvent) {
     if (!model.isGhost) {
-      model.creator.selectElement(model.page);
-      if (!this.onPageSelectedCallback) {
+      model.creator.selectElement(model.page, undefined, false);
+      if (!!this.onPageSelectedCallback) {
         this.onPageSelectedCallback();
       }
     }
   }
+
   get css(): string {
     if (this.isGhost) {
       return "svc-page__content--new";
@@ -98,5 +100,15 @@ export class PageViewModel<T extends SurveyModel> extends Base {
     return this.creator.isElementSelected(this.page)
       ? "svc-page__content--selected"
       : "";
+  }
+  public hover(event: MouseEvent, element: HTMLElement) {
+    toggleHovered(event, element);
+  }
+  protected duplicate() {
+    var newElement = this.creator.copyPage(this.page);
+    this.creator.selectElement(newElement);
+  }
+  public get allowEdit() {
+    return !this.creator.readOnly;
   }
 }

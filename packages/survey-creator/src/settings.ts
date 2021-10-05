@@ -3,6 +3,8 @@ import * as Survey from "survey-knockout";
 export var settings = {
   traslation: {
     sortByName: true,
+    //Set it to \xef\xbb\xbf; to tell system that it is UTF8 file. You can use other prefix as well
+    exportPrefix: "",
   },
   operators: {
     empty: [],
@@ -38,6 +40,13 @@ export interface ISurveyCreatorOptions {
     property: Survey.JsonObjectProperty,
     showMode: string,
     parentObj: any,
+    parentProperty: Survey.JsonObjectProperty
+  ): boolean;
+  onIsPropertyReadOnlyCallback(
+    obj: Survey.Base,
+    property: Survey.JsonObjectProperty,
+    readOnly: boolean,
+    parentObj: Survey.Base,
     parentProperty: Survey.JsonObjectProperty
   ): boolean;
   onCanDeleteItemCallback(
@@ -113,6 +122,15 @@ export class EmptySurveyCreatorOptions implements ISurveyCreatorOptions {
     property: Survey.JsonObjectProperty,
     showMode: string,
     parentObj: any,
+    parentProperty: Survey.JsonObjectProperty
+  ): boolean {
+    return true;
+  }
+  onIsPropertyReadOnlyCallback(
+    obj: Survey.Base,
+    property: Survey.JsonObjectProperty,
+    readOnly: boolean,
+    parentObj: Survey.Base,
     parentProperty: Survey.JsonObjectProperty
   ): boolean {
     return true;

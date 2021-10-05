@@ -1,19 +1,17 @@
-import * as Survey from "survey-knockout";
-
 export interface ISurveyQuestionEditorDefinition {
   title?: string;
-  properties?: Array<string | { name: string; title?: string; tab?: string }>;
+  properties?: Array<string | { name: string, title?: string, tab?: string }>;
   tabs?: Array<{
-    name: string;
-    index?: number;
-    title?: string;
-    visible?: boolean;
+    name: string,
+    index?: number,
+    title?: string,
+    visible?: boolean,
   }>;
 }
 
 export class SurveyQuestionEditorDefinition {
   public static definition: {
-    [key: string]: ISurveyQuestionEditorDefinition;
+    [key: string]: ISurveyQuestionEditorDefinition,
   } = {
     question: {
       properties: [
@@ -59,6 +57,8 @@ export class SurveyQuestionEditorDefinition {
         "placeHolder",
         { name: "maxLength", tab: "validation" },
         { name: "textUpdateMode", tab: "data" },
+        { name: "autoGrow", tab: "layout" },
+        { name: "multiLine", tab: "layout" },
       ],
     },
     file: {
@@ -74,6 +74,7 @@ export class SurveyQuestionEditorDefinition {
         "imageHeight",
         "imageWidth",
         "waitForUpload",
+        "needConfirmRemoveFile"
       ],
     },
     html: {
@@ -84,6 +85,7 @@ export class SurveyQuestionEditorDefinition {
         "cellType",
         "optionsCaption",
         "detailPanelMode",
+        "detailPanelShowOnAdding",
         { name: "showHeader", tab: "layout" },
         { name: "columnsVisibleIf", tab: "logic" },
         { name: "columnLayout", tab: "layout" },
@@ -101,6 +103,7 @@ export class SurveyQuestionEditorDefinition {
       properties: [
         "allowAddRows",
         "allowRemoveRows",
+        "allowRowsDragAndDrop",
         "rowCount",
         "minRowCount",
         "maxRowCount",
@@ -130,6 +133,7 @@ export class SurveyQuestionEditorDefinition {
         { name: "isAllRowRequired", tab: "validation" },
         { name: "showHeader", tab: "layout" },
         { name: "rowsOrder", tab: "rows" },
+        { name: "hideIfRowsEmpty", tab: "rows" },
         { name: "columnsVisibleIf", tab: "logic" },
         { name: "rowsVisibleIf", tab: "logic" },
       ],
@@ -194,6 +198,7 @@ export class SurveyQuestionEditorDefinition {
     dropdown: {
       properties: [
         "optionsCaption",
+        "autoComplete",
         { name: "choicesMin", tab: "choices" },
         { name: "choicesMax", tab: "choices" },
         { name: "choicesStep", tab: "choices" },
@@ -217,6 +222,7 @@ export class SurveyQuestionEditorDefinition {
         "imageFit",
         "imageHeight",
         "imageWidth",
+        "text"
       ],
     },
     "itemvalue[]@choices": {
@@ -307,6 +313,7 @@ export class SurveyQuestionEditorDefinition {
         { name: "hasNone", tab: "choices" },
         { name: "noneText", tab: "choices" },
         { name: "maxSelectedChoices", tab: "choices" },
+        { name: "selectAllText", tab: "choices" }
       ],
       tabs: [
         { name: "choices", index: 10 },
@@ -456,6 +463,7 @@ export class SurveyQuestionEditorDefinition {
         { name: "page", tab: "layout" },
         { name: "startWithNewLine", tab: "layout" },
         { name: "state", tab: "layout" },
+        { name: "questionsOrder", tab: "layout" },
         { name: "indent", tab: "layout" },
         { name: "innerIndent", tab: "layout" },
         { name: "width", tab: "layout" },
@@ -515,6 +523,7 @@ export class SurveyQuestionEditorDefinition {
         { name: "questionsOrder", tab: "question" },
         { name: "maxTextLength", tab: "question" },
         { name: "maxOthersLength", tab: "question" },
+        { name: "autoGrowComment", tab: "question" },
 
         { name: "showPageTitles", tab: "pages" },
         { name: "showPageNumbers", tab: "pages" },

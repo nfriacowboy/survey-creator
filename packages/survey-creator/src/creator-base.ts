@@ -7,7 +7,7 @@ import { SurveyHelper, ObjType } from "./surveyHelper";
 import { SurveyJSON5 } from "./json5";
 import { SurveyLogic } from "./tabs/logic";
 import { ISurveyCreatorOptions } from "./settings";
-import { EditableObject } from "./entries";
+import { EditableObject } from "./propertyEditors/editableObject";
 
 export interface ICreatorOptions {
   [index: string]: any;
@@ -17,7 +17,8 @@ export interface ICreatorOptions {
  * Base class for Survey Creator.
  */
 export class CreatorBase<T extends { [index: string]: any }>
-  implements ISurveyCreatorOptions {
+implements ISurveyCreatorOptions
+{
   private showDesignerTabValue = ko.observable<boolean>(false);
   private showJSONEditorTabValue = ko.observable<boolean>(false);
   private showTestSurveyTabValue = ko.observable<boolean>(false);
@@ -27,6 +28,7 @@ export class CreatorBase<T extends { [index: string]: any }>
   private isRTLValue: boolean = false;
   private haveCommercialLicenseValue = ko.observable(false);
   private alwaySaveTextInPropertyEditorsValue: boolean = false;
+  private showDropdownPageSelectorValue = ko.observable(true);
 
   protected surveyValue = ko.observable<T>();
 
@@ -249,7 +251,7 @@ export class CreatorBase<T extends { [index: string]: any }>
   /**
    * This callback is used internally for providing survey JSON text.
    */
-  public getSurveyJSONTextCallback: () => { text: string; isModified: boolean };
+  public getSurveyJSONTextCallback: () => { text: string, isModified: boolean };
   /**
    * This callback is used internally for setting survey JSON text.
    */
@@ -571,8 +573,8 @@ export class CreatorBase<T extends { [index: string]: any }>
       typeof options.showEmbeddedSurveyTab !== "undefined"
         ? options.showEmbeddedSurveyTab
         : typeof options.showEmbededSurveyTab !== "undefined"
-        ? options.showEmbededSurveyTab
-        : false
+          ? options.showEmbededSurveyTab
+          : false
     );
     this.showTranslationTabValue(
       typeof options.showTranslationTab !== "undefined"
@@ -647,20 +649,13 @@ export class CreatorBase<T extends { [index: string]: any }>
     if (typeof options.allowModifyPages !== "undefined") {
       this.allowModifyPages = options.allowModifyPages;
     }
-  }
-
-  isCanModifyProperty(obj: Survey.Base, propertyName: string): boolean {
-    var property = Survey.Serializer.findProperty(obj.getType(), propertyName);
-    return (
-      !property ||
-      !this.onIsPropertyReadOnlyCallback(
-        obj,
-        property,
-        property.readOnly,
-        undefined,
-        undefined
-      )
-    );
+    if (this.options.showPageSelectorInToolbar) {
+      this.showPageSelectorInToolbar = true;
+      this.showDropdownPageSelectorValue(false);
+    }
+    if (typeof options.showDropdownPageSelector !== "undefined") {
+      this.showDropdownPageSelectorValue(options.showDropdownPageSelector);
+    }
   }
 
   onIsPropertyReadOnlyCallback(
@@ -769,7 +764,9 @@ export class CreatorBase<T extends { [index: string]: any }>
   public setModified(options: any = null) {}
 
   protected convertCurrentObject(obj: Survey.Question, className: string) {
+    this.startTransaction("Convert question to: " + className);
     var newQuestion = QuestionConverter.convertObject(obj, className);
+    this.stopTransation();
     this.setModified({
       type: "QUESTION_CONVERTED",
       className: className,
@@ -785,6 +782,7 @@ export class CreatorBase<T extends { [index: string]: any }>
    * @see text
    */
   public get JSON(): any {
+    if (!this.survey) return {};
     return (<any>this.survey).toJSON();
   }
   public set JSON(val: any) {
@@ -794,7 +792,12 @@ export class CreatorBase<T extends { [index: string]: any }>
       this.initSurveyWithJSON(val, true);
     }
   }
-
+  /**
+   * Set it to false hide the dropdown page selector in the page editor above the design surface
+   */
+  public get showDropdownPageSelector() {
+    return this.showDropdownPageSelectorValue();
+  }
   protected doClickQuestionCore(
     element: Survey.IElement,
     modifiedType: string = "ADDED_FROM_TOOLBOX"
@@ -1213,4 +1216,8 @@ export class CreatorBase<T extends { [index: string]: any }>
   stopUndoRedoTransaction() {
     //TODO
   }
+  protected startTransaction(name: string) {
+
+  }
+  protected stopTransation() {}
 }

@@ -4,6 +4,7 @@ import {
   HtmlConditionItem,
   SurveyTrigger,
   Serializer,
+  Helpers,
 } from "survey-core";
 import { editorLocalization } from "../../editorLocalization";
 import { ExpressionToDisplayText } from "../../expressionToDisplayText";
@@ -17,6 +18,9 @@ export interface ISurveyLogicType {
   name: string;
   baseClass: string;
   propertyName: string;
+  dynamicPropertyName?: string;
+  dependedOnPropertyName?: string;
+  isInvisible?: boolean;
   showInUI?: boolean;
   showIf?: (survey: SurveyModel) => boolean;
   getCollection?: (survey: SurveyModel) => Array<Base>;
@@ -54,6 +58,15 @@ export class SurveyLogicType {
   public get propertyName(): string {
     return this.logicType.propertyName;
   }
+  public get hasVisibleElements(): boolean {
+    return this.logicType.isInvisible !== true;
+  }
+  public get dynamicPropertyName(): string {
+    return this.logicType.dynamicPropertyName;
+  }
+  public get dependedOnPropertyName(): string {
+    return this.logicType.dependedOnPropertyName;
+  }
   public get visible(): boolean {
     if (!this.showInUI) return false;
     if (!!this.logicType.showIf) return this.logicType.showIf(this.survey);
@@ -62,7 +75,28 @@ export class SurveyLogicType {
   public get showTitlesInExpression(): boolean {
     return !!this.options && this.options.showTitlesInExpressions;
   }
-  public saveNewElement(el: Base) {
+  public createNewObj(srcObj: Base): Base {
+    const obj = <Base>Serializer.createClass(this.baseClass);
+    if (!!srcObj) {
+      obj.fromJSON(srcObj.toJSON());
+    }
+    //TODO
+    obj["survey"] = this.survey;
+    if ((<any>obj).setOwner) {
+      (<any>obj).setOwner(this.survey);
+    }
+    return obj;
+  }
+  public cloneElement(el: Base): Base {
+    if(this.isTrigger) return this.createNewObj(el);
+    return el;
+  }
+  public areElementsEqual(el1: Base, el2: Base): boolean {
+    if(el1 === el2) return true;
+    if(!this.isTrigger || el1.getType() !== el2.getType()) return false;
+    return Helpers.isTwoValueEquals(el1.toJSON(), el2.toJSON());
+  }
+  public saveNewElement(el: Base): void {
     var collection: Array<Base> = !!this.logicType.getCollection
       ? this.logicType.getCollection(this.survey)
       : null;
@@ -211,11 +245,14 @@ export class SurveyLogicTypes {
       baseClass: "completetrigger",
       propertyName: "expression",
       isUniqueItem: true,
+      isInvisible: true
     },
     {
       name: "trigger_setvalue",
       baseClass: "setvaluetrigger",
       propertyName: "expression",
+      dynamicPropertyName: "setValue",
+      dependedOnPropertyName: "setToName",
       questionNames: ["setToName"],
       getDisplayText: function (
         element: Base,

@@ -2,21 +2,22 @@ import {
   Base,
   ItemValue,
   property,
-  QuestionCheckboxBase,
   QuestionCheckboxModel,
   QuestionSelectBase,
-  surveyLocalization,
   SurveyModel
 } from "survey-core";
 import { CreatorBase } from "../creator-base";
-import { DragDropHelper } from "../dragdrophelper";
-import { IPortableDragEvent } from "../entries";
-
+import { DragDropChoices } from "survey-core";
 import "./item-value.scss";
+import { getLocString } from "../editorLocalization";
 
 export class ItemValueWrapperViewModel extends Base {
   @property({ defaultValue: false }) isNew: boolean;
   @property({ defaultValue: false }) isDragging: boolean;
+  @property({ defaultValue: false }) isDragDropGhost: boolean;
+  @property({ defaultValue: false }) isDragDropMoveDown: boolean;
+  @property({ defaultValue: false }) isDragDropMoveUp: boolean;
+  @property({ defaultValue: null }) ghostPosition: string; // need fot image-item-value
   constructor(
     public creator: CreatorBase<SurveyModel>,
     public question: QuestionSelectBase,
@@ -34,14 +35,37 @@ export class ItemValueWrapperViewModel extends Base {
       const nextValue = creator.getNextItemValue(question);
       item.value = nextValue;
     }
-    this.subscribeToDragDropHelper();
-  }
-  dispose() {
-    super.dispose();
-    this.unsubscribeToDragDropHelper();
+    this.dragDropHelper.onGhostPositionChanged.add(
+      this.handleDragDropGhostPositionChanged
+    );
   }
 
+  startDragItemValue(event: PointerEvent) {
+    this.dragDropHelper.startDrag(event, this.item, this.question, <HTMLElement>event.currentTarget);
+  }
+  private get dragDropHelper(): DragDropChoices {
+    return this.creator.dragDropChoices;
+  }
+  public dispose() {
+    super.dispose();
+    this.dragDropHelper.onGhostPositionChanged.remove(
+      this.handleDragDropGhostPositionChanged
+    );
+  }
+  private handleDragDropGhostPositionChanged = () => {
+    this.ghostPosition = this.dragDropHelper.getGhostPosition(this.item);
+    this.isDragDropGhost = this.item === this.dragDropHelper.draggedElement;
+    
+    if (this.item === this.dragDropHelper.dropTarget) {
+      this.isDragDropMoveDown = this.item.isDragDropMoveDown;
+      this.isDragDropMoveUp = this.item.isDragDropMoveUp;
+    }
+  };
+  get isDraggable() {
+    return this.isDraggableItem(this.item);
+  }
   public isDraggableItem(item: ItemValue) {
+    if (this.creator.readOnly) return false;
     return this.question.choices.indexOf(item) !== -1;
   }
 
@@ -79,30 +103,19 @@ export class ItemValueWrapperViewModel extends Base {
     }
     this.isNew = !model.question["isItemInList"](model.item);
   }
-  @property({ defaultValue: null }) ghostPosition: string;
-  private handleDragDropHelperChanges = (sender, options) => {
-    if (options.name === "isBottom") {
-      this.ghostPosition = this.dragDropHelper.getItemValueGhostPosition(
-        this.item
-      );
-    }
-  };
-  private subscribeToDragDropHelper = () => {
-    this.dragDropHelper.onPropertyChanged.add(this.handleDragDropHelperChanges);
-  };
-  private unsubscribeToDragDropHelper = () => {
-    this.dragDropHelper.onPropertyChanged.remove(
-      this.handleDragDropHelperChanges
-    );
-  };
-  startDragItemValue(event: PointerEvent) {
-    this.dragDropHelper.startDragItemValue(event, this.question, this.item);
+
+  get allowRemove() {
+    return !this.creator.readOnly;
   }
-  private get dragDropHelper(): DragDropHelper {
-    return this.creator.dragDropHelper;
+  get tooltip() {
+    return getLocString(this.isNew ? "pe.addItem" : "pe.removeItem");
   }
-  get isDraggable() {
-    return this.isDraggableItem(this.item);
+  get dragTooltip() {
+    return getLocString("pe.dragItem");
+  }
+  get allowAdd() {
+    const isNew = !this.question.isItemInList(this.item);
+    return !this.creator.readOnly && isNew;
   }
   public select(model: ItemValueWrapperViewModel, event: Event) {
     model.creator.selectElement(model.question, "choices", false);

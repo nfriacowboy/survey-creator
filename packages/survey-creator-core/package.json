@@ -1,5 +1,5 @@
 {
-  "version": "1.8.50-alpha.0",
+  "version": "1.8.71-beta.0",
   "name": "survey-creator-core",
   "homepage": "https://surveyjs.io/Overview/Survey-Creator",
   "license": "SEE LICENSE IN LICENSE",
@@ -10,13 +10,16 @@
   "scripts": {
     "build": "webpack --env.buildType dev && webpack --env.buildType prod",
     "test": "jest",
+    "test:cov": "jest --coverage",
     "test:dev": "jest --watch",
     "watch:dev": "webpack --env.buildType dev --watch",
     "watch:prod": "webpack --env.buildType prod --watch",
-    "release": "standard-version --message \"Release: %s [skip ci]\" --prerelease alpha",
-    "remove-package-lock": "rimraf package-lock.json"
+    "release": "standard-version --message \"Release: %s [skip ci]\" --prerelease beta",
+    "remove-package-lock": "rimraf package-lock.json",
+    "lint": "eslint ./src"
   },
   "dependencies": {
+    "eslint": "^7.32.0",
     "papaparse": "^5.2.0",
     "rmodal": "1.0.31",
     "sortablejs": "1.6.1",
@@ -38,11 +41,11 @@
     "css-loader": "^3.6.0",
     "dotenv": "4.0.0",
     "dts-bundle": "0.7.2",
+    "eslint": "^7.32.0",
     "file-loader": "0.10.0",
     "github-api": "^3.3.0",
     "html-loader": "0.4.4",
     "http-server": "^0.12.3",
-    "husky": "^1.2.1",
     "jest": "^26.1.0",
     "jest-canvas-mock": "^2.2.0",
     "jquery": "^3.5.1",
@@ -67,11 +70,6 @@
     "webpack-cli": "^3.3.12",
     "webpack-dev-server": "^3.11.0",
     "webpack-svgstore-plugin": "4.0.1"
-  },
-  "husky": {
-    "hooks": {
-      "pre-push": "npm run test"
-    }
   },
   "standard-version": {
     "skip": {

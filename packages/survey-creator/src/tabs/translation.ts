@@ -6,7 +6,7 @@ import { SurveyCreator } from "../editor";
 import { settings } from "../settings";
 
 import "./translation.scss";
-import { IActionBarItem } from "survey-knockout";
+import { IAction } from "survey-knockout";
 import { SurveyHelper } from "../surveyHelper";
 var templateHtml = require("./translation.html");
 var groupTemplateHtml = require("./translation-group.html");
@@ -456,9 +456,9 @@ export class Translation implements ITranslationLocales {
 
   /**
    * The list of toolbar items. You may add/remove/replace them.
-   * @see IActionBarItem
+   * @see IAction
    */
-  public toolbarItems = ko.observableArray<IActionBarItem>();
+  public toolbarItems = ko.observableArray<IAction>();
 
   constructor(
     survey: Survey.Survey,
@@ -521,8 +521,8 @@ export class Translation implements ITranslationLocales {
     };
     this.survey = survey;
 
-    const items: Array<IActionBarItem> = [];
-    items.push(<IActionBarItem>{
+    const items: Array<IAction> = [];
+    items.push(<IAction>{
       id: "svd-translation-language-selector",
       title: "",
       tooltip: this.selectLanguageOptionsCaption,
@@ -544,7 +544,7 @@ export class Translation implements ITranslationLocales {
         write: (val: any) => this.koShowAllStrings(val),
       }),
     });
-    items.push(<IActionBarItem>{
+    items.push(<IAction>{
       id: "svd-translation-pages-selector",
       title: "",
       tooltip: "",
@@ -695,15 +695,20 @@ export class Translation implements ITranslationLocales {
       }
       res.push(row);
     }
-    return unparse(res, {
-      quoteChar: '"',
-      escapeChar: '"',
-      delimiter: Translation.csvDelimiter,
-      header: true,
-      newline: Translation.newLineDelimiter,
-      skipEmptyLines: false, //or 'greedy',
-      columns: null, //or array of strings
-    });
+    let prefix = settings.traslation.exportPrefix;
+    if (!prefix) prefix = "";
+    return (
+      prefix +
+      unparse(res, {
+        quoteChar: '"',
+        escapeChar: '"',
+        delimiter: Translation.csvDelimiter,
+        header: true,
+        newline: Translation.newLineDelimiter,
+        skipEmptyLines: false, //or 'greedy',
+        columns: null, //or array of strings
+      })
+    );
   }
 
   public importFromNestedArray(rows: string[][]) {
@@ -729,8 +734,8 @@ export class Translation implements ITranslationLocales {
   public exportToSCVFile(fileName: string) {
     var data = this.exportToCSV();
     var blob = new Blob([data], { type: "text/csv" });
-    if (window.navigator.msSaveOrOpenBlob) {
-      window.navigator.msSaveBlob(blob, fileName);
+    if (window.navigator["msSaveOrOpenBlob"]) {
+      window.navigator["msSaveBlob"](blob, fileName);
     } else {
       var elem = window.document.createElement("a");
       elem.href = window.URL.createObjectURL(blob);

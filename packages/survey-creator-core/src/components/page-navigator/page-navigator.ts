@@ -1,16 +1,6 @@
 import { CreatorBase } from "../../creator-base";
-import { PagesController } from "../../controllers/pages-controller";
-import {
-  IActionBarItem,
-  PageModel,
-  PopupModel,
-  ListModel,
-  Base,
-  propertyArray,
-  ActionBarItem,
-  SurveyModel,
-  property
-} from "survey-core";
+import { PagesController } from "../../pages-controller";
+import { PageModel, PopupModel, ListModel, Base, propertyArray, SurveyModel, property, IAction, Action } from "survey-core";
 
 import "./page-navigator.scss";
 import "./page-navigator-item.scss";
@@ -20,10 +10,7 @@ export class PageNavigatorViewModel<T extends SurveyModel> extends Base {
   public pageListModel: ListModel;
   public popupModel: PopupModel;
   private pagesChangedFunc: (sender: PagesController, options: any) => any;
-  private currentPageChangedFunc: (
-    sender: PagesController,
-    options: any
-  ) => any;
+  private currentPageChangedFunc: (sender: PagesController, options: any) => any;
   private pageNameChangedFunc: (sender: PagesController, options: any) => any;
 
   constructor(private pagesController: PagesController) {
@@ -56,10 +43,10 @@ export class PageNavigatorViewModel<T extends SurveyModel> extends Base {
     );
     this.popupModel = new PopupModel("sv-list", { model: this.pageListModel });
     this.popupModel.onShow = () => {
-      this.pageListModel.selectedItem = this.getActionBarByPage(
-        this.pagesController.currentPage
-      );
+      this.pageListModel.selectedItem = this.getActionBarByPage(this.pagesController.currentPage);
+      this.isPopupOpened = true;
     };
+    this.popupModel.onHide = () => { this.isPopupOpened = false; };
     this.buildItems();
   }
   public dispose() {
@@ -71,15 +58,16 @@ export class PageNavigatorViewModel<T extends SurveyModel> extends Base {
     this.pagesController.onPageNameChanged.add(this.pageNameChangedFunc);
   }
 
-  @propertyArray() items: Array<IActionBarItem>;
+  @propertyArray() items: Array<IAction>;
   @property({ defaultValue: false }) visible: boolean;
-  private getActionBarByPage(page: PageModel): IActionBarItem {
+  @property({ defaultValue: false }) isPopupOpened: boolean;
+  private getActionBarByPage(page: PageModel): IAction {
     for (var i = 0; i < this.items.length; i++) {
       if (this.items[i].data === page) return this.items[i];
     }
     return null;
   }
-  private setItems(items: Array<IActionBarItem>) {
+  private setItems(items: Array<IAction>) {
     this.items = items;
     this.pageListModel.items = items;
     this.visible = items.length > 1;
@@ -99,8 +87,8 @@ export class PageNavigatorViewModel<T extends SurveyModel> extends Base {
       item.active = item.data === page;
     }
   }
-  private createActionBarItem(page: PageModel): ActionBarItem {
-    const item: IActionBarItem = {
+  private createActionBarItem(page: PageModel): Action {
+    const item: IAction = {
       id: page.id,
       title: this.pagesController
         ? this.pagesController.getDisplayName(page)
@@ -113,8 +101,8 @@ export class PageNavigatorViewModel<T extends SurveyModel> extends Base {
     item.data = page;
     return this.createActionBarCore(item);
   }
-  protected createActionBarCore(item: IActionBarItem): ActionBarItem {
-    return new ActionBarItem(item);
+  protected createActionBarCore(item: IAction): Action {
+    return new Action(item);
   }
   togglePageSelector = () => this.popupModel.toggleVisibility();
 }

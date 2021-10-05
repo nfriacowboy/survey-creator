@@ -64,6 +64,7 @@ test("Add condition", () => {
     survey,
     survey.getQuestionByName("q1")
   );
+  expect(conditionEditor.title).toEqual("Rule is incorrect");
   conditionEditor.text = "{q} = 1";
   expect(conditionEditor.panel.panelCount).toEqual(1);
   expect(conditionEditor.isReady).toEqual(true);
@@ -77,7 +78,34 @@ test("Add condition", () => {
   editPanel.getQuestionByName("questionValue").value = 2;
   expect(conditionEditor.isReady).toEqual(true);
   expect(conditionEditor.text).toEqual("{q} = 1 and {q2} = 2");
+  expect(conditionEditor.title).toEqual("{q} = 1 and {q2} = 2");
 });
+test("Custom text for condition title", () => {
+  const survey = new SurveyModel({
+    questions: [
+      { type: "text", name: "q1" },
+      { type: "text", name: "q" },
+      { type: "text", name: "q2" }
+    ]
+  });
+  const options = new EmptySurveyCreatorOptions();
+  options.onConditionGetTitleCallback = (expression: string, title: string): string => {
+    if(!expression) return "Please setup the expression";
+    return "Your expression is: " + title;
+  };
+  const conditionEditor = new ConditionEditor(survey, survey.getQuestionByName("q1"), options);
+  expect(conditionEditor.title).toEqual("Please setup the expression");
+  conditionEditor.text = "{q} = 1";
+  expect(conditionEditor.title).toEqual("Your expression is: {q} = 1");
+  conditionEditor.panel.addPanel();
+  expect(conditionEditor.title).toEqual("Please setup the expression");
+  var editPanel = conditionEditor.panel.panels[1];
+  var nameQuestion = editPanel.getQuestionByName("questionName");
+  nameQuestion.value = "q2";
+  editPanel.getQuestionByName("questionValue").value = 2;
+  expect(conditionEditor.title).toEqual("Your expression is: {q} = 1 and {q2} = 2");
+});
+
 test("Do not delete the only condition, but clear it", () => {
   var survey = new SurveyModel({
     questions: [
@@ -819,6 +847,13 @@ test("Create expression from scratch", () => {
   editor.panel.addPanel();
   panel = editor.panel.panels[1];
   expect(panel.getQuestionByName("conjunction").isVisible).toBeTruthy();
+  expect(panel.getQuestionByName("conjunction").choices).toHaveLength(2);
+  expect(panel.getQuestionByName("conjunction").choices[0].value).toEqual(
+    "and"
+  );
+  expect(panel.getQuestionByName("conjunction").choices[0].text).toEqual("And");
+  expect(panel.getQuestionByName("conjunction").choices[1].value).toEqual("or");
+  expect(panel.getQuestionByName("conjunction").choices[1].text).toEqual("Or");
   panel.getQuestionByName("questionName").value = "q2";
   expect(editor.isReady).toBeFalsy();
   panel.getQuestionByName("questionValue").value = 2;
@@ -831,34 +866,8 @@ test("Create expression from scratch", () => {
   expect(panel.getQuestionByName("conjunction").isVisible).toBeFalsy();
   expect(editor.text).toEqual("{q2} empty");
 });
-test("We are supporting wide mode only", () => {
-  var survey = new SurveyModel({
-    elements: [
-      { name: "q1", type: "text" },
-      { name: "q2", type: "radiogroup", choices: [1, 2, 3] },
-      { name: "q3", type: "checkbox", choices: [1, 2, 3] },
-      { name: "q4", type: "text" }
-    ]
-  });
-  var question = survey.getQuestionByName("q4");
-  var editor = new ConditionEditor(survey, question);
-  expect(editor.panel.panels).toHaveLength(1);
-  var panel = editor.panel.panels[0];
-  var questionValue = panel.getQuestionByName("questionValue");
-  expect(questionValue.titleLocation).toEqual("hidden");
-  expect(questionValue.startWithNewLine).toBeFalsy();
 
-  panel.getQuestionByName("questionName").value = "q3";
-  questionValue = panel.getQuestionByName("questionValue");
-  expect(questionValue.titleLocation).toEqual("default");
-  expect(questionValue.startWithNewLine).toBeTruthy();
-
-  panel.getQuestionByName("questionName").value = "q2";
-  questionValue = panel.getQuestionByName("questionValue");
-  expect(questionValue.titleLocation).toEqual("hidden");
-  expect(questionValue.startWithNewLine).toBeFalsy();
-});
-test("Set question width", () => {
+test.skip("Set question width", () => {
   var survey = new SurveyModel({
     elements: [
       { name: "q1", type: "text" },
@@ -910,6 +919,7 @@ test("Set question width", () => {
   expect(panel.getQuestionByName("operator").width).toEqual("60%");
   expect(panel.getQuestionByName("questionValue").width).toEqual("");
 });
+
 test("Set correct value for array, Bug #700", () => {
   var survey = new SurveyModel({
     elements: [
@@ -1084,6 +1094,9 @@ test("options.maxLogicItemsInCondition, hide `Add Condition` on exceeding the va
     return obj.title + " [" + obj.name + "]";
   };
   var editor = new ConditionEditor(survey, question, options, "visibleIf");
+  expect(editor.panel.maxPanelCount).toEqual(1);
+
+  editor.panel.addPanel();
   expect(editor.panel.maxPanelCount).toEqual(2);
 });
 
@@ -1194,8 +1207,8 @@ test("Show rating/ranking in new line", () => {
   var editor = new ConditionEditor(survey, question);
   var panel = editor.panel.panels[0];
   var questionValue = panel.getQuestionByName("questionValue");
-  expect(questionValue.titleLocation).toEqual("hidden");
-  expect(questionValue.startWithNewLine).toBeFalsy();
+  expect(questionValue.titleLocation).toEqual("default");
+  expect(questionValue.startWithNewLine).toBeTruthy();
 
   panel.getQuestionByName("questionName").value = "q3";
   questionValue = panel.getQuestionByName("questionValue");
@@ -1209,10 +1222,41 @@ test("Show rating/ranking in new line", () => {
 
   panel.getQuestionByName("questionName").value = "q2";
   questionValue = panel.getQuestionByName("questionValue");
-  expect(questionValue.titleLocation).toEqual("hidden");
-  expect(questionValue.startWithNewLine).toBeFalsy();
+  expect(questionValue.titleLocation).toEqual("default");
+  expect(questionValue.startWithNewLine).toBeTruthy();
 });
-test("Set minWidth proeprty to question correctly", () => {
+test("Make question value invisible for empty/notempty if they are in the new line", () => {
+  var survey = new SurveyModel({
+    elements: [
+      { name: "q1", type: "text" },
+      { name: "q2", type: "ranking", choices: [1, 2, 3] }
+    ]
+  });
+  var question = survey.getQuestionByName("q1");
+  var editor = new ConditionEditor(survey, question);
+  editor.isModal = false;
+  var panel = editor.panel.panels[0];
+  panel.getQuestionByName("questionName").value = "q1";
+  panel.getQuestionByName("operator").value = "equal";
+  var questionValue = panel.getQuestionByName("questionValue");
+  expect(questionValue.startWithNewLine).toBeTruthy();
+  expect(questionValue.isReadOnly).toBeFalsy();
+  expect(questionValue.isVisible).toBeTruthy();
+  panel.getQuestionByName("operator").value = "empty";
+  expect(questionValue.startWithNewLine).toBeTruthy();
+  expect(questionValue.isVisible).toBeFalsy();
+
+  panel.getQuestionByName("questionName").value = "q2";
+  panel.getQuestionByName("operator").value = "equal";
+  var questionValue = panel.getQuestionByName("questionValue");
+  expect(questionValue.startWithNewLine).toBeTruthy();
+  expect(questionValue.isReadOnly).toBeFalsy();
+  expect(questionValue.isVisible).toBeTruthy();
+  panel.getQuestionByName("operator").value = "empty";
+  expect(questionValue.startWithNewLine).toBeTruthy();
+  expect(questionValue.isVisible).toBeFalsy();
+});
+test("Set minWidth property to question correctly", () => {
   var survey = new SurveyModel({
     elements: [
       { name: "q1", type: "text" },
@@ -1232,4 +1276,101 @@ test("Set minWidth proeprty to question correctly", () => {
   expect(panel.getQuestionByName("questionName").minWidth).toEqual("50px");
   expect(panel.getQuestionByName("operator").minWidth).toEqual("50px");
   expect(panel.getQuestionByName("questionValue").minWidth).toEqual("50px");
+});
+test("setIsFastEntry method, not a modal mode", () => {
+  const survey = new SurveyModel({
+    elements: [
+      { name: "q1", type: "text", visibleIf: "{q2} = 1" },
+      { name: "q2", type: "radiogroup", choices: [1, 2, 3] },
+      { name: "q3", type: "checkbox", choices: [1, 2, 3] }
+    ]
+  });
+  const question = survey.getQuestionByName("q1");
+  const editor = new ConditionEditor(survey, question, undefined, "visibleIf");
+  expect(editor.panel.titleLocation).toEqual("hidden");
+  editor.isModal = false;
+  expect(editor.panel.visible).toBeTruthy();
+  expect(editor.textEditor.visible).toBeFalsy();
+
+  editor.setIsFastEntry(true, question.visibleIf);
+  expect(editor.panel.visible).toBeFalsy();
+  expect(editor.textEditor.visible).toBeTruthy();
+  expect(editor.textEditor.value).toEqual("{q2} = 1");
+  editor.textEditor.value = "{q2} = 2";
+
+  editor.setIsFastEntry(false, "");
+  expect(editor.panel.visible).toBeTruthy();
+  expect(editor.textEditor.visible).toBeFalsy();
+  expect(editor.text).toEqual("{q2} = 2");
+});
+test("Set text property, not a modal mode", () => {
+  var survey = new SurveyModel({
+    elements: [
+      { name: "q1", type: "text" },
+      { name: "q2", type: "radiogroup", choices: [1, 2, 3] },
+      { name: "q3", type: "checkbox", choices: [1, 2, 3] }
+    ]
+  });
+  var question = survey.getQuestionByName("q1");
+  var editor = new ConditionEditor(survey, question);
+  editor.isModal = false;
+  editor.text = "{q2} = 1";
+  expect(editor.panel.visible).toBeTruthy();
+  expect(editor.textEditor.visible).toBeFalsy();
+  expect(editor.text).toEqual("{q2} = 1");
+  editor.text = "{q2} = 1 dskfjsdfjds";
+  expect(editor.panel.visible).toBeFalsy();
+  expect(editor.textEditor.visible).toBeTruthy();
+  expect(editor.text).toEqual("{q2} = 1 dskfjsdfjds");
+  editor.text = "{q2} = 2";
+  expect(editor.panel.visible).toBeTruthy();
+  expect(editor.textEditor.visible).toBeFalsy();
+  expect(editor.text).toEqual("{q2} = 2");
+});
+test("Can parse expression", () => {
+  expect(ConditionEditor.canBuildExpression("{q1} = 1")).toBeTruthy();
+  expect(ConditionEditor.canBuildExpression("age({q1}) = 1")).toBeFalsy();
+});
+test("questionName choices", () => {
+  const survey = new SurveyModel({
+    elements: [
+      { name: "question 1", type: "text" },
+      { name: "question 11", type: "text" },
+      { name: "question 2", type: "text" },
+      { name: "question 10", type: "text" },
+    ]
+  });
+  const question = survey.getQuestionByName("q4");
+  const editor = new ConditionEditor(survey, question);
+  const panel = editor.panel.panels[0];
+  const choices = panel.getQuestionByName("questionName").choices;
+  expect(choices).toHaveLength(4);
+  expect(choices[0].text).toEqual("question 1");
+  expect(choices[1].text).toEqual("question 2");
+  expect(choices[2].text).toEqual("question 10");
+  expect(choices[3].text).toEqual("question 11");
+});
+test("questionName title visibility", () => {
+  const survey = new SurveyModel({
+    elements: [
+      { name: "q1", type: "text" },
+      { name: "q2", type: "text" },
+      { name: "q3", type: "text" },
+      { name: "q4", type: "text" },
+    ]
+  });
+  const question = survey.getQuestionByName("q4");
+  const editor = new ConditionEditor(survey, question);
+  let panel1 = editor.panel.panels[0];
+  expect(panel1.getQuestionByName("questionName").titleLocation).toEqual("left");
+  editor.panel.addPanel();
+  let panel2 = editor.panel.panels[1];
+  expect(panel2.getQuestionByName("questionName").titleLocation).toEqual("hidden");
+
+  editor.text = "{q1}=1 and {q2}=2";
+  expect(editor.panel.panels).toHaveLength(2);
+  panel1 = editor.panel.panels[0];
+  expect(panel1.getQuestionByName("questionName").titleLocation).toEqual("left");
+  panel2 = editor.panel.panels[1];
+  expect(panel2.getQuestionByName("questionName").titleLocation).toEqual("hidden");
 });

@@ -1,5 +1,5 @@
 {
-  "version": "1.8.51",
+  "version": "1.8.70",
   "name": "survey-creator",
   "homepage": "https://surveyjs.io/Overview/Survey-Creator",
   "license": "SEE LICENSE IN LICENSE",
@@ -22,7 +22,8 @@
     "build_prod": "webpack --env.buildType dev --env.libraryName SurveyEditor && webpack --env.buildType prod --env.libraryName SurveyEditor && webpack --env.buildType dev && webpack --env.buildType prod",
     "build": "npm run build_prod",
     "watch:dev": "webpack --env.buildType dev --watch",
-    "clean": "rimraf build && rimraf package && rimraf survey-creator"
+    "lint": "eslint ./src",
+    "remove-package-lock": "rimraf package-lock.json"
   },
   "dependencies": {
     "bootstrap": "^5.0.1",
@@ -30,7 +31,7 @@
     "papaparse": "^5.2.0",
     "rmodal": "1.0.31",
     "sortablejs": "1.6.1",
-    "survey-knockout": "^1.8.46"
+    "survey-knockout": "^1.8.66"
   },
   "devDependencies": {
     "@types/ace": "0.0.32",
@@ -48,11 +49,11 @@
     "css-loader": "^3.6.0",
     "dotenv": "4.0.0",
     "dts-bundle": "0.7.2",
+    "eslint": "^7.32.0",
     "file-loader": "0.10.0",
     "github-api": "^3.3.0",
     "html-loader": "0.4.4",
     "http-server": "^0.12.3",
-    "husky": "^1.2.1",
     "jquery": "^3.5.1",
     "karma": "^2.0.0",
     "karma-chrome-launcher": "^2.2.0",
@@ -80,10 +81,5 @@
     "webpack-cli": "^3.3.12",
     "webpack-dev-server": "^3.11.0",
     "webpack-svgstore-plugin": "4.0.1"
-  },
-  "husky": {
-    "hooks": {
-      "pre-push": "npm run test"
-    }
   }
 }

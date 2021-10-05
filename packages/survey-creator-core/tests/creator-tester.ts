@@ -1,4 +1,4 @@
-import { SurveyModel, IActionBarItem } from "survey-core";
+import { SurveyModel, IAction } from "survey-core";
 import { CreatorBase, ICreatorOptions } from "../src/creator-base";
 
 export class CreatorTester extends CreatorBase<SurveyModel> {
@@ -10,17 +10,17 @@ export class CreatorTester extends CreatorBase<SurveyModel> {
   }
   public get selectedElementName(): string {
     if (!this.selectedElement) return "";
-    var name = this.selectedElement["name"];
+    const name = this.selectedElement["name"];
     if (!!name) return name;
     return this.selectedElement.getType();
   }
-  public getActionBarItem(id: string): IActionBarItem {
+  public getActionBarItem(id: string): IAction {
     return this.getActionBarItemByActions(this.toolbarItems, id);
   }
   public getActionBarItemByActions(
-    actions: Array<IActionBarItem>,
+    actions: Array<IAction>,
     id: string
-  ): IActionBarItem {
+  ): IAction {
     for (var i = 0; i < actions.length; i++) {
       if (actions[i].id == id) return actions[i];
     }
@@ -30,6 +30,3 @@ export class CreatorTester extends CreatorBase<SurveyModel> {
     this.doSave();
   }
 }
-test("dummy test", () => {
-  expect(true).toEqual(true);
-});

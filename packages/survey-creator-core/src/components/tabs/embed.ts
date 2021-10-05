@@ -11,11 +11,9 @@ import { json } from "./embed-json";
 import "./embed.scss";
 
 export class EmbedModel extends Base {
-  @property() public survey: SurveyModel;
-  constructor() {
+  @property() survey: SurveyModel;
+  constructor(creator: CreatorBase<SurveyModel>) {
     super();
-  }
-  public init(creator: CreatorBase<SurveyModel>): void {
     FunctionFactory.Instance.register(
       "surveyjsEmbedScriptsMarkup",
       (params: [string, string]) => {
@@ -59,7 +57,7 @@ export class EmbedModel extends Base {
         const window: string = show === "window" ? "Window" : "";
         switch (framework) {
           case "angular":
-            result += `@Component({\n    selector: "ng-app",\n    template: '<div id="surveyElement"></div>'\n})`;
+            result += "@Component({\n    selector: \"ng-app\",\n    template: '<div id=\"surveyElement\"></div>'\n})";
             result += `\nexport class AppComponent {\n    ngOnInit() {\n        var survey = new Survey.Model(surveyJSON);\n        survey.onComplete.add(sendDataToServer);\n        Survey.Survey${window}NG.render("surveyElement", { model: survey });\n    }\n}`;
             break;
           case "jquery":
@@ -96,24 +94,13 @@ export class EmbedModel extends Base {
 export class TabEmbedPlugin implements ICreatorPlugin {
   public model: EmbedModel;
   constructor(private creator: CreatorBase<SurveyModel>) {
-    this.model = new EmbedModel();
-    creator.tabs.push({
-      id: "embed",
-      title: getLocString("ed.embedSurvey"),
-      componentContent: "svc-tab-embed",
-      data: this,
-      action: () => {
-        creator.makeNewViewActive("embed");
-      },
-      active: () => creator.viewType === "embed"
-    });
-    creator.addPlugin("embed", this);
+    creator.addPluginTab("embed", this, getLocString("ed.embedSurvey"));
   }
   public activate(): void {
-    this.model.init(this.creator);
+    this.model = new EmbedModel(this.creator);
   }
   public deactivate(): boolean {
-    this.model.survey = undefined;
+    this.model = undefined;
     return true;
   }
 }

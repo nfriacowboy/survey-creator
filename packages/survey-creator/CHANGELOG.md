@@ -2,6 +2,106 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.8.70](https://github.com/surveyjs/survey-creator/compare/v1.8.69...v1.8.70) (2021-09-29)
+
+### [1.8.69](https://github.com/surveyjs/survey-creator/compare/v1.8.68...v1.8.69) (2021-09-28)
+
+### [1.8.68](https://github.com/surveyjs/survey-creator/compare/v1.8.67...v1.8.68) (2021-09-21)
+
+### [1.8.67](https://github.com/surveyjs/survey-creator/compare/v1.8.66...v1.8.67) (2021-09-17)
+
+
+### Bug Fixes
+
+* V2: Could not set expression in trigger in property grid [#1759](https://github.com/surveyjs/survey-creator/issues/1759) ([#1774](https://github.com/surveyjs/survey-creator/issues/1774)) ([5587d2d](https://github.com/surveyjs/survey-creator/commit/5587d2d5065535b7552d90397adff36d02d4d887))
+
+### [1.8.66](https://github.com/surveyjs/survey-creator/compare/v1.8.65...v1.8.66) (2021-09-15)
+
+
+### Bug Fixes
+
+* Undo/Redo works incorrectly on changing question type in V1 [#1724](https://github.com/surveyjs/survey-creator/issues/1724) ([#1726](https://github.com/surveyjs/survey-creator/issues/1726)) ([407f8ee](https://github.com/surveyjs/survey-creator/commit/407f8ee5c798b7b9875cb27f4d8e5fc18b0c9d58))
+
+### [1.8.65](https://github.com/surveyjs/survey-creator/compare/v1.8.64...v1.8.65) (2021-09-07)
+
+### [1.8.64](https://github.com/surveyjs/survey-creator/compare/v1.8.63...v1.8.64) (2021-08-31)
+
+
+### Bug Fixes
+
+* Next choice value doesn't generated correctly in several cases. [#1665](https://github.com/surveyjs/survey-creator/issues/1665) ([#1666](https://github.com/surveyjs/survey-creator/issues/1666)) ([e3d6258](https://github.com/surveyjs/survey-creator/commit/e3d6258a17a24a3c3c41dbb5a6fa2d8157e73f3c))
+* V2: There are non localizable strings in logic edit panel [#1640](https://github.com/surveyjs/survey-creator/issues/1640) ([e47d772](https://github.com/surveyjs/survey-creator/commit/e47d772ea4838b741c3755c8644f12939c5d4e0b))
+
+### [1.8.63](https://github.com/surveyjs/survey-creator/compare/v1.8.62...v1.8.63) (2021-08-25)
+
+### [1.8.62](https://github.com/surveyjs/survey-creator/compare/v1.8.61...v1.8.62) (2021-08-25)
+
+### [1.8.61](https://github.com/surveyjs/survey-creator/compare/v1.8.60...v1.8.61) (2021-08-19)
+
+
+### Bug Fixes
+
+* V2: There are non localizable strings in logic edit panel [#1640](https://github.com/surveyjs/survey-creator/issues/1640) ([#1641](https://github.com/surveyjs/survey-creator/issues/1641)) ([08922e0](https://github.com/surveyjs/survey-creator/commit/08922e0cfadebe25b40733c64a91ba6b695830e3))
+
+### [1.8.60](https://github.com/surveyjs/survey-creator/compare/v1.8.59...v1.8.60) (2021-08-11)
+
+
+### Bug Fixes
+
+* Console error on new logic tab design in V2 [#1588](https://github.com/surveyjs/survey-creator/issues/1588) ([c9f5112](https://github.com/surveyjs/survey-creator/commit/c9f511208a8f8afb0225549fb1cfff6ed1aa3a9b))
+* Logic tab: Could not delete triggers in the logic tab [#1598](https://github.com/surveyjs/survey-creator/issues/1598) ([#1599](https://github.com/surveyjs/survey-creator/issues/1599)) ([64d49b0](https://github.com/surveyjs/survey-creator/commit/64d49b0bb34803812a0d44cada3a5bfce4f2222a))
+* V2: We have to re-create Condition Editor on every new/edit logic item [#1600](https://github.com/surveyjs/survey-creator/issues/1600) ([#1601](https://github.com/surveyjs/survey-creator/issues/1601)) ([276cfe3](https://github.com/surveyjs/survey-creator/commit/276cfe391a728c7a67c96b3be5b10a8840d76c64))
+
+### [1.8.59](https://github.com/surveyjs/survey-creator/compare/v1.8.58...v1.8.59) (2021-08-03)
+
+
+### Bug Fixes
+
+* Invisible pages are not disabled in page selector in Test tab [#1567](https://github.com/surveyjs/survey-creator/issues/1567) ([df7fb88](https://github.com/surveyjs/survey-creator/commit/df7fb8853629bfdf44221396ce15ce49866d275e))
+* options showPageSelectorInToolbar and showDropdownPageSelector doesn't work in V1 [#1578](https://github.com/surveyjs/survey-creator/issues/1578) ([#1579](https://github.com/surveyjs/survey-creator/issues/1579)) ([25fe86f](https://github.com/surveyjs/survey-creator/commit/25fe86f04061d0f81ddea2d0374a8e36b5da291d))
+
+### [1.8.58](https://github.com/surveyjs/survey-creator/compare/v1.8.57...v1.8.58) (2021-07-28)
+
+
+### Bug Fixes
+
+* Duplicating a page does nothing until the tabs are changed in V2 [#1547](https://github.com/surveyjs/survey-creator/issues/1547) ([897e5f9](https://github.com/surveyjs/survey-creator/commit/897e5f9692375032f46f55456c9195da1016e73e))
+* Toolbox doesn't load in 1.8.57 [#1558](https://github.com/surveyjs/survey-creator/issues/1558) ([bede98a](https://github.com/surveyjs/survey-creator/commit/bede98a629a5442be86ba79218139e9e8f5bbbc3))
+
+### [1.8.57](https://github.com/surveyjs/survey-creator/compare/v1.8.56...v1.8.57) (2021-07-20)
+
+
+### Bug Fixes
+
+* New added question is not visible on clicking on toolbox [#1537](https://github.com/surveyjs/survey-creator/issues/1537) ([52b7ed0](https://github.com/surveyjs/survey-creator/commit/52b7ed08be8bed76c8976855bfcd46a34955c257))
+* Non unique entries possible through fast entry when itemValues are set unique in V2. [#1497](https://github.com/surveyjs/survey-creator/issues/1497) ([#1533](https://github.com/surveyjs/survey-creator/issues/1533)) ([0283340](https://github.com/surveyjs/survey-creator/commit/02833405d87c491ed5cd0135e5a9060aeb8bc297))
+* Progress Bar does not work/appear correctly on Designer Page in Creator V2 React version [#1507](https://github.com/surveyjs/survey-creator/issues/1507) ([#1510](https://github.com/surveyjs/survey-creator/issues/1510)) ([e9c5f92](https://github.com/surveyjs/survey-creator/commit/e9c5f9297d1e58d07c1717a3838f6fba7b47ed56))
+
+### [1.8.56](https://github.com/surveyjs/survey-creator/compare/v1.8.55...v1.8.56) (2021-07-13)
+
+
+### Bug Fixes
+
+* Changing default value of showProgressBar creates progress bar inside property grid: V2 [#1481](https://github.com/surveyjs/survey-creator/issues/1481) ([#1488](https://github.com/surveyjs/survey-creator/issues/1488)) ([76bc43e](https://github.com/surveyjs/survey-creator/commit/76bc43e60df5869c55cacb8f55de4a3295756149))
+
+### [1.8.55](https://github.com/surveyjs/survey-creator/compare/v1.8.54...v1.8.55) (2021-07-07)
+
+### [1.8.54](https://github.com/surveyjs/survey-creator/compare/v1.8.53...v1.8.54) (2021-06-30)
+
+
+### Bug Fixes
+
+* Throw exception if try adding question in empty survey by toolbox click [#1414](https://github.com/surveyjs/survey-creator/issues/1414) ([#1432](https://github.com/surveyjs/survey-creator/issues/1432)) ([94ea900](https://github.com/surveyjs/survey-creator/commit/94ea900f2c8c21bb55719995c1cb63e25fa3ea50))
+
+### [1.8.53](https://github.com/surveyjs/survey-creator/compare/v1.8.52...v1.8.53) (2021-06-23)
+
+
+### Bug Fixes
+
+* Editor text looks like placeholder [#1378](https://github.com/surveyjs/survey-creator/issues/1378) ([#1408](https://github.com/surveyjs/survey-creator/issues/1408)) ([fde9963](https://github.com/surveyjs/survey-creator/commit/fde99636521bc19314db0ab97f570756d14b7c4f))
+
+### [1.8.52](https://github.com/surveyjs/survey-creator/compare/v1.8.51...v1.8.52) (2021-06-16)
+
 ### [1.8.51](https://github.com/surveyjs/survey-creator/compare/v1.8.50...v1.8.51) (2021-06-09)
 
 

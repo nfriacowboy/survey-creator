@@ -30,8 +30,14 @@ class KnockoutImageItemValueWrapperViewModel extends ImageItemValueWrapperViewMo
   }
   get attributes() {
     return this.isDraggable
-      ? { "data-svc-drop-target-item-value": this.item.value }
+      ? { "data-sv-drop-target-item-value": this.item.value }
       : null;
+  }
+  public blockEvent(
+    _: KnockoutImageItemValueWrapperViewModel,
+    event: MouseEvent
+  ) {
+    event.stopPropagation();
   }
 }
 
@@ -49,7 +55,7 @@ ko.components.register("svc-image-item-value", {
         question,
         <ImageItemValue>item,
         params.templateData,
-        componentInfo.element.parentElement
+        componentInfo.element.nextSibling
       );
       new ImplementorBase(model);
       return model;

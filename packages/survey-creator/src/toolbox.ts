@@ -1,13 +1,13 @@
 import * as ko from "knockout";
 import * as Survey from "survey-knockout";
-import { IActionBarItem } from "survey-knockout";
+import { IAction } from "survey-knockout";
 import { CreatorBase } from "./creator-base";
 import { editorLocalization } from "./editorLocalization";
 
 /**
  * The Toolbox item description.
  */
-export interface IQuestionToolboxItem extends IActionBarItem {
+export interface IQuestionToolboxItem extends IAction {
   /**
    * A unique name
    */
@@ -542,6 +542,7 @@ export class QuestionToolbox {
     return !!items ? items : [];
   }
   private addItemFromJSON(json: any) {
+    if (json.showInToolbox === false) return;
     const iconName: string = json.iconName ? json.iconName : "icon-default";
     let title: string = editorLocalization.getString("qt." + json.name);
     if (!title || title == json.name) {

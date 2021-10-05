@@ -6,26 +6,51 @@ import {
   Question,
   QuestionRowModel,
   QuestionSelectBase,
-  SurveyElement,
-  SurveyModel
+  SurveyModel,
+  LocalizableString
 } from "survey-core";
+import { Survey, ImplementorBase, Panel } from "survey-knockout-ui";
 import {
-  Survey,
-  ImplementorBase,
-  Panel,
-  QuestionRow
-} from "survey-knockout-ui";
-import { ICreatorOptions, CreatorBase } from "@survey/creator";
+  ICreatorOptions,
+  CreatorBase,
+  getElementWrapperComponentName,
+  isStringEditable,
+  getElementWrapperComponentData,
+  getItemValueWrapperComponentName,
+  getItemValueWrapperComponentData
+} from "@survey/creator";
 import { editableStringRendererName } from "./components/string-editor";
 
 if (!!ko.options) {
   ko.options.useOnlyNativeEvents = true;
 }
 
-class DesignTimeSurveyModel extends Survey {
+export class DesignTimeSurveyModel extends Survey {
   constructor(public creator: SurveyCreator, jsonObj?: any) {
     super(jsonObj);
   }
+  public isPopupEditorContent = false;
+
+  public getElementWrapperComponentName(element: any, reason?: string): string {
+    let componentName = getElementWrapperComponentName(
+      element,
+      reason,
+      this.isPopupEditorContent
+    );
+    if (!componentName && element instanceof Panel) {
+      if (element.koElementType() == "survey-panel") {
+        return "svc-panel";
+      }
+    }
+    return (
+      componentName || super.getElementWrapperComponentName(element, reason)
+    );
+  }
+  public getElementWrapperComponentData(element: any, reason?: string): any {
+    const data = getElementWrapperComponentData(element, reason, this.creator);
+    return data || super.getElementWrapperComponentData(element);
+  }
+
   public getRowWrapperComponentName(row: QuestionRowModel): string {
     return "svc-row";
   }
@@ -35,105 +60,41 @@ class DesignTimeSurveyModel extends Survey {
       row
     };
   }
-  public isPopupEditorContent = false;
-  public getElementWrapperComponentName(element: any, reason?: string): string {
-    if (this.isDesignMode) {
-      if(reason === "cell" || reason === "column-header" || reason === "row-header") {
-        return "svc-matrix-cell";
-      }
-      if(!element["parentQuestionValue"]) {
-        if (element instanceof Question) {
-          if (element.getType() == "dropdown") {
-            return this.isPopupEditorContent ? "svc-cell-dropdown-question" : "svc-dropdown-question";
-          }
-          if (element.getType() == "image") {
-            return "svc-image-question";
-          }
-          if (element.getType() == "rating") {
-            return "svc-rating-question";
-          }
-          if (element.koElementType() == "survey-question") {
-            return this.isPopupEditorContent ? "svc-cell-question" : "svc-question";
-          }
-        }
-        if (element instanceof Panel) {
-          if (element.koElementType() == "survey-panel") {
-            return "svc-panel";
-          }
-        }
-      }
-    }
-    return super.getElementWrapperComponentName(element, reason);
-  }
-  public getElementWrapperComponentData(element: any, reason?: string): any {
-    if (this.isDesignMode) {
-      if(reason === "cell" || reason === "column-header" || reason === "row-header") {
-        return { creator: this.creator, element: element, question: element.question, row: element.row, column: element.column };
-      }
-      if(!element["parentQuestionValue"]) {
-        if (element instanceof Question) {
-          if (element.koElementType() == "survey-question") {
-            return this.creator;
-          }
-        }
-        if (element instanceof Panel) {
-          if (element.koElementType() == "survey-panel") {
-            return this.creator;
-          }
-        }
-      }
-    }
-    return super.getElementWrapperComponentData(element, reason);
-  }
 
   public getItemValueWrapperComponentName(item: ItemValue, question: QuestionSelectBase): string {
-    if(!this.isDesignMode || !!question["parentQuestionValue"]) {
-      return SurveyModel.TemplateRendererComponentName;
-    }
-    if (question.getType() === "imagepicker") {
-      return "svc-image-item-value";
-    }
-    return "svc-item-value";
+    return getItemValueWrapperComponentName(item, question);
   }
   public getItemValueWrapperComponentData(item: ItemValue, question: QuestionSelectBase): any {
-    if(!this.isDesignMode || !!question["parentQuestionValue"]) {
-      return item;
-    }
-    return {
-      creator: this.creator,
-      question,
-      item
-    };
-  }
-
-  public getMatrixCellTemplateData(cell: any) {
-    if(!this.isDesignMode) {
-      return cell.question;
-    }
-    return cell.question;
-    // return cell.cell.column.templateQuestion;
+    return getItemValueWrapperComponentData(item, question, this.creator);
   }
 
   public getRendererForString(element: Base, name: string): string {
-    if (this.isDesignMode && !element["parentQuestionValue"]) {
+    if (!this.creator.readOnly && isStringEditable(element, name)) {
       return editableStringRendererName;
     }
     return undefined;
   }
+  public getRendererContextForString(element: Base, locStr: LocalizableString) {
+    if (!this.creator.readOnly && isStringEditable(element, locStr.name)) {
+      return {
+        creator: this.creator,
+        element,
+        locStr
+      };
+    }
+    return <any>locStr;
+  }
 }
 
 export class SurveyCreator extends CreatorBase<Survey> {
-  @property() testProp: string;
-
   constructor(options: ICreatorOptions = {}, options2?: ICreatorOptions) {
     super(options, options2);
-    new ImplementorBase(this.toolbox);
-    new ImplementorBase(this.dragDropHelper);
-    new ImplementorBase(this);
   }
 
-  protected createSurveyCore(json: any = {}): Survey {
-    return new DesignTimeSurveyModel(this, json);
+  protected createSurveyCore(json: any = {}, reason: string): Survey {
+    if (reason === "designer" || reason === "modal-question-editor")
+      return new DesignTimeSurveyModel(this, json);
+    return new Survey(json);
   }
 
   protected onViewTypeChanged(newType: string) {
@@ -146,7 +107,7 @@ export class SurveyCreator extends CreatorBase<Survey> {
     if (typeof target === "string") {
       node = document.getElementById(target);
     }
-    node.innerHTML = `<survey-creator params="creator: creator"></survey-creator>`;
+    node.innerHTML = "<survey-creator params=\"creator: creator\"></survey-creator>";
     ko.cleanNode(node);
     ko.applyBindings({ creator: this }, node);
   }

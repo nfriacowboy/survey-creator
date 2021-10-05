@@ -4,7 +4,7 @@ import * as Survey from "survey-knockout";
 import { SurveyCreator } from "../editor";
 
 import "./test.scss";
-import { IActionBarItem } from "survey-knockout";
+import { IAction } from "survey-knockout";
 
 var templateHtml = require("./test.html");
 
@@ -33,9 +33,9 @@ export class SurveyLiveTester {
 
   /**
    * The list of toolbar items. You may add/remove/replace them.
-   * @see IActionBarItem
+   * @see IAction
    */
-  public toolbarItems = ko.observableArray<IActionBarItem>();
+  public toolbarItems = ko.observableArray<IAction>();
 
   onSurveyCreatedCallback: (survey: Survey.Survey) => any;
   constructor(private surveyProvider: any) {
@@ -85,11 +85,7 @@ export class SurveyLiveTester {
         write: (val: any) => this.koActivePage(val),
       }),
       afterRender: this.setPageDisable,
-      items: <any>ko.computed(() =>
-        this.koPages().map((page) => {
-          return { text: page.title, value: page.page };
-        })
-      ),
+      items: <any>ko.computed(() => this.koPages()),
     });
     this.toolbarItems.push({
       id: "svd-test-locale-selector",
@@ -171,7 +167,8 @@ export class SurveyLiveTester {
       var page = this.survey.pages[i];
       pages.push({
         page: page,
-        title: this.onGetObjectDisplayName
+        value: page,
+        text: this.onGetObjectDisplayName
           ? this.onGetObjectDisplayName(page)
           : page.name,
         koVisible: ko.observable(page.isVisible),
